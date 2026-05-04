@@ -11,9 +11,7 @@ class Transcriber {
             onProgress?(0.05, "Подготовка...")
 
             whisperKit = try await WhisperKit(
-                model: "openai/whisper-small",
-                modelFolder: nil,
-                tokenizerFolder: nil,
+                model: "whisper-small",
                 verbose: false,
                 logLevel: .none,
                 prewarm: false,
