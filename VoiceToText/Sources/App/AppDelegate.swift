@@ -7,12 +7,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindow: NSWindow?
     var historyWindow: NSWindow?
     var donateWindow: NSWindow?
+    var splashWindow: NSWindow?
     let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusBar()
         setupOverlayWindow()
         setupHotkeys()
+        if !splashDisabled() { showSplash() }
 
         Task {
             await appState.transcriber.loadModel(appState.selectedLocalModel)
@@ -158,6 +160,47 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         donateWindow = window
+    }
+
+    // MARK: - Splash
+
+    func showSplash() {
+        let window = KeyableWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 340, height: 300),
+            styleMask: [.borderless, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.level = .floating
+        window.isMovableByWindowBackground = true
+        window.hasShadow = true
+
+        let view = SplashView(
+            onDonate: { [weak self] in
+                self?.splashWindow?.orderOut(nil)
+                self?.showDonate()
+            },
+            onClose: { [weak self] in
+                self?.splashWindow?.orderOut(nil)
+            }
+        )
+
+        window.contentView = NSHostingView(rootView: view)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        splashWindow = window
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.splashWindow?.orderOut(nil)
+        }
+    }
+
+    private func splashDisabled() -> Bool {
+        let flag = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".speakyfi_nosplash")
+        return FileManager.default.fileExists(atPath: flag.path)
     }
 
     // MARK: - Hotkeys
