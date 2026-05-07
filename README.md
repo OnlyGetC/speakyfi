@@ -4,7 +4,7 @@
 
 Вдохновлено [SuperWhisper](https://superwhisper.com), написано на Swift/SwiftUI с открытым исходным кодом.
 
-Бесплатная альтернатива SuperWhisper и Spokenly. Локальная транскрибация без подписки — всё на устройстве. Опционально — облачные API (OpenAI, Groq, Deepgram).
+Бесплатная альтернатива SuperWhisper и Spokenly. Локальная транскрибация без подписки — всё на устройстве. Опционально — облачные API и коррекция текста через LLM.
 
 ---
 
@@ -14,6 +14,7 @@
 - **VAD-режим** — автоматическое определение речи без нажатия клавиш
 - **Выбор модели** — tiny / base / small / medium / large, скачивание и смена на лету
 - **Облачные API** — OpenAI Whisper, Groq, Deepgram (API-ключ хранится в Keychain)
+- **Коррекция текста** — постобработка через LLM: исправляет ошибки распознавания, восстанавливает англицизмы и термины
 - **История транскрипций** — последние 50 записей с копированием
 - **Настраиваемые хоткеи** — любая клавиша или модификатор (⌘ ⌃ ⌥ ⇧)
 - **Автовставка** — текст сразу появляется в активном поле любого приложения
@@ -33,7 +34,7 @@
 
 ### Готовый архив
 
-Скачайте `VoiceToText-v1.3.zip` из [Releases](https://github.com/OnlyGetC/voice-to-text-swift/releases), распакуйте и перетащите в `/Applications`.
+Скачайте `VoiceToText-v1.4.zip` из [Releases](https://github.com/OnlyGetC/voice-to-text-swift/releases), распакуйте и перетащите в `/Applications`.
 
 ### Сборка из исходников
 
@@ -79,9 +80,9 @@ cp -r $APP /Applications/
 
 ---
 
-## Выбор модели
+## Настройки — разделы
 
-В Настройках → секция **МОДЕЛЬ**:
+### Модель
 
 | Режим | Описание |
 |---|---|
@@ -98,6 +99,18 @@ cp -r $APP /Applications/
 | medium | ~1.5 ГБ | Высокое |
 | large v3 | ~3 ГБ | Максимальное |
 
+### Коррекция текста
+
+Опциональный шаг после транскрибации — LLM исправляет ошибки распознавания и восстанавливает технические термины и англицизмы в оригинальном написании (git, JSON, API, OK и т.д.).
+
+| Режим | Описание |
+|---|---|
+| Выключено | Текст вставляется как есть (по умолчанию) |
+| Локально (Ollama) | Устанавливается прямо из приложения, модель `llama3.2:1b` (~1.3 ГБ), без интернета |
+| API | OpenAI, Groq (бесплатный тир), свой эндпоинт |
+
+Промт коррекции редактируется в настройках.
+
 ---
 
 ## Архитектура
@@ -105,26 +118,28 @@ cp -r $APP /Applications/
 ```
 VoiceToText/Sources/
 ├── App/
-│   ├── VoiceToTextApp.swift          # @main точка входа
-│   ├── AppDelegate.swift             # меню-бар, оркестрация
-│   └── AppState.swift                # общее состояние (ObservableObject)
+│   ├── VoiceToTextApp.swift               # @main точка входа
+│   ├── AppDelegate.swift                  # меню-бар, оркестрация
+│   └── AppState.swift                     # общее состояние (ObservableObject)
 ├── Features/
 │   ├── Recording/
-│   │   ├── AudioRecorder.swift       # AVAudioEngine, PTT и VAD
-│   │   └── HotkeyManager.swift       # глобальные хоткеи
+│   │   ├── AudioRecorder.swift            # AVAudioEngine, PTT и VAD
+│   │   └── HotkeyManager.swift            # глобальные хоткеи
 │   ├── Transcription/
-│   │   ├── Transcriber.swift         # WhisperKit, смена модели на лету
-│   │   ├── ModelManager.swift        # статус и скачивание локальных моделей
-│   │   └── CloudTranscriber.swift    # OpenAI / Groq / Deepgram API
+│   │   ├── Transcriber.swift              # WhisperKit, смена модели на лету
+│   │   ├── ModelManager.swift             # статус и скачивание локальных моделей
+│   │   ├── CloudTranscriber.swift         # OpenAI / Groq / Deepgram API
+│   │   ├── TextCorrectionService.swift    # постобработка через LLM
+│   │   └── OllamaManager.swift            # установка Ollama, сервер, pull модели
 │   └── Output/
-│       └── OutputHandler.swift       # CGEvent postToPid — автовставка
+│       └── OutputHandler.swift            # CGEvent postToPid — автовставка
 └── UI/
-    ├── OverlayWindow.swift           # floating NSWindow + KeyableWindow
-    ├── OverlayView.swift             # compact pill оверлей
-    ├── WaveformView.swift            # анимация волны
-    ├── SettingsView.swift            # настройки, выбор модели
-    ├── HistoryView.swift             # история транскрипций
-    └── DonateView.swift              # экран поддержки автора
+    ├── OverlayWindow.swift                # floating NSWindow + KeyableWindow
+    ├── OverlayView.swift                  # compact pill оверлей
+    ├── WaveformView.swift                 # анимация волны
+    ├── SettingsView.swift                 # sidebar: 5 разделов, 700×520px
+    ├── HistoryView.swift                  # история транскрипций
+    └── DonateView.swift                   # экран поддержки автора
 ```
 
 ---
@@ -136,17 +151,24 @@ VoiceToText/Sources/
 - **AVAudioEngine** — запись с микрофона
 - **CoreGraphics CGEvent** — автовставка текста (`postToPid`)
 - **Security (Keychain)** — хранение API-ключей
+- **Ollama** — локальный LLM-сервер для коррекции текста
 
 ---
 
 ## Changelog
 
+### v1.4
+- Коррекция текста через LLM: Ollama (установка из приложения) или API (OpenAI/Groq/свой эндпоинт)
+- Редизайн настроек: боковое меню с 5 разделами, окно 700×520px
+- Кнопка ⓘ с описанием у каждого раздела
+- Исправлено: попап подсказки обрезал текст
+
 ### v1.3
 - Выбор локальной модели: tiny / base / small / medium / large, скачивание и смена на лету
 - Облачные API: OpenAI Whisper, Groq, Deepgram; API-ключ в Keychain
 - Экран доната 🪙
-- Исправлено: окна настроек/истории/доната не принимали фокус (`KeyableWindow`)
-- Исправлено: модели не определялись как скачанные (неверный путь и префикс имён)
+- Исправлено: окна не принимали фокус (`KeyableWindow`)
+- Исправлено: модели не определялись как скачанные
 - Исправлено: ошибка «Model folder is not set» при запуске
 
 ### v1.2
@@ -167,10 +189,10 @@ VoiceToText/Sources/
 
 ## Roadmap
 
+- [ ] Локализация интерфейса (English / Русский)
 - [ ] Поддержка Intel Mac (whisper.cpp)
-- [ ] Автозапуск при входе в систему
-- [ ] Пунктуация и форматирование через LLM после транскрибации
 - [ ] Поддержка Windows
+- [ ] Автозапуск при входе в систему
 
 ---
 
