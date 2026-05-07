@@ -78,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         let window = KeyableWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 620),
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 520),
             styleMask: [.borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -202,9 +202,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let prompt = appState.promptEnabled ? appState.transcriptionPrompt : nil
         let provider = appState.transcriptionProvider
         let cloudProvider = appState.selectedCloudProvider
+        let correctionMode = appState.correctionMode
+        let correctionPrompt = appState.correctionPrompt
+        let correctionApiProvider = appState.correctionApiProvider
+        let correctionOllamaModel = appState.correctionOllamaModel
+        let correctionCustomEndpoint = appState.correctionCustomEndpoint
 
         Task {
-            let result: String?
+            var result: String?
 
             if provider == .cloud {
                 result = await appState.cloudTranscriber.transcribe(
@@ -217,6 +222,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     audio: audio,
                     language: language,
                     prompt: prompt
+                )
+            }
+
+            // Постобработка через LLM если включена
+            if let raw = result, correctionMode != .off {
+                result = await appState.correctionService.correct(
+                    text: raw,
+                    mode: correctionMode,
+                    prompt: correctionPrompt,
+                    apiProvider: correctionApiProvider,
+                    ollamaModel: correctionOllamaModel,
+                    customEndpoint: correctionCustomEndpoint
                 )
             }
 

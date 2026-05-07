@@ -49,9 +49,27 @@ class AppState: ObservableObject {
     // Флаг — идёт ли смена модели
     @Published var isModelSwitching: Bool = false
 
+    // Настройки коррекции текста
+    @Published var correctionMode: CorrectionMode {
+        didSet { UserDefaults.standard.set(correctionMode.rawValue, forKey: "correctionMode") }
+    }
+    @Published var correctionApiProvider: CorrectionApiProvider {
+        didSet { UserDefaults.standard.set(correctionApiProvider.rawValue, forKey: "correctionApiProvider") }
+    }
+    @Published var correctionOllamaModel: String {
+        didSet { UserDefaults.standard.set(correctionOllamaModel, forKey: "correctionOllamaModel") }
+    }
+    @Published var correctionPrompt: String {
+        didSet { UserDefaults.standard.set(correctionPrompt, forKey: "correctionPrompt") }
+    }
+    @Published var correctionCustomEndpoint: String {
+        didSet { UserDefaults.standard.set(correctionCustomEndpoint, forKey: "correctionCustomEndpoint") }
+    }
+
     let recorder = AudioRecorder()
     let transcriber = Transcriber()
     let cloudTranscriber = CloudTranscriber()
+    let correctionService = TextCorrectionService()
 
     init() {
         self.transcriptionLanguage = UserDefaults.standard.string(forKey: "transcriptionLanguage") ?? "ru"
@@ -66,6 +84,16 @@ class AppState: ObservableObject {
 
         let cloudRaw = UserDefaults.standard.string(forKey: "selectedCloudProvider") ?? CloudProvider.openai.rawValue
         self.selectedCloudProvider = CloudProvider(rawValue: cloudRaw) ?? .openai
+
+        let correctionRaw = UserDefaults.standard.string(forKey: "correctionMode") ?? CorrectionMode.off.rawValue
+        self.correctionMode = CorrectionMode(rawValue: correctionRaw) ?? .off
+
+        let correctionProviderRaw = UserDefaults.standard.string(forKey: "correctionApiProvider") ?? CorrectionApiProvider.groq.rawValue
+        self.correctionApiProvider = CorrectionApiProvider(rawValue: correctionProviderRaw) ?? .groq
+
+        self.correctionOllamaModel = UserDefaults.standard.string(forKey: "correctionOllamaModel") ?? "llama3.2"
+        self.correctionPrompt = UserDefaults.standard.string(forKey: "correctionPrompt") ?? defaultCorrectionPrompt
+        self.correctionCustomEndpoint = UserDefaults.standard.string(forKey: "correctionCustomEndpoint") ?? ""
 
         transcriber.onReady = { [weak self] in
             DispatchQueue.main.async {
