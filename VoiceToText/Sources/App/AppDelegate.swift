@@ -28,13 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updateStatusIcon()
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Показать", action: #selector(showOverlay), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: t(.menuShow), action: #selector(showOverlay), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Режим: PTT / VAD", action: #selector(toggleVAD), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: t(.menuMode), action: #selector(toggleVAD), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Настройки...", action: #selector(showSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: t(.menuSettings), action: #selector(showSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Выйти", action: #selector(quit), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: t(.menuQuit), action: #selector(quit), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 

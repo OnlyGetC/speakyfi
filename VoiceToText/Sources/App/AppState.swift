@@ -73,7 +73,7 @@ class AppState: ObservableObject {
 
     init() {
         self.transcriptionLanguage = UserDefaults.standard.string(forKey: "transcriptionLanguage") ?? "ru"
-        self.transcriptionPrompt = UserDefaults.standard.string(forKey: "transcriptionPrompt") ?? "Текст может содержать технические термины на английском языке."
+        self.transcriptionPrompt = UserDefaults.standard.string(forKey: "transcriptionPrompt") ?? t(.promptDefaultText)
         self.promptEnabled = UserDefaults.standard.object(forKey: "promptEnabled") as? Bool ?? false
 
         let providerRaw = UserDefaults.standard.string(forKey: "transcriptionProvider") ?? "local"
@@ -159,7 +159,7 @@ struct WhisperLanguage: Identifiable, Hashable {
     let name: String
 
     static let all: [WhisperLanguage] = [
-        .init(id: "auto", name: "Авто (определить)"),
+        .init(id: "auto", name: t(.langAuto)),
         .init(id: "ru", name: "Русский"),
         .init(id: "en", name: "English"),
         .init(id: "zh", name: "中文 (Chinese)"),

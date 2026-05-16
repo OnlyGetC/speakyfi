@@ -7,6 +7,7 @@ struct OverlayView: View {
     var onSettings: () -> Void
     var onHistory: () -> Void
 
+    @ObservedObject private var l10n = L10nState.shared
     @State private var copied = false
 
     var body: some View {
@@ -127,7 +128,7 @@ struct OverlayView: View {
                 .progressViewStyle(.circular)
                 .scaleEffect(0.65)
                 .tint(.white.opacity(0.5))
-            Text("Распознавание...")
+            Text(t(.overlayTranscribing))
                 .font(.system(size: 12, design: .rounded))
                 .foregroundColor(.white.opacity(0.45))
         }
@@ -153,7 +154,7 @@ struct OverlayView: View {
                     HStack(spacing: 4) {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 10))
-                        Text(copied ? "Скопировано" : "Копировать")
+                        Text(copied ? t(.overlayCopied) : t(.overlayCopy))
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                     }
                     .foregroundColor(copied ? .green : .white.opacity(0.55))
@@ -166,7 +167,7 @@ struct OverlayView: View {
 
                 Spacer()
 
-                Text("вставлено")
+                Text(t(.overlayInserted))
                     .font(.system(size: 10, design: .rounded))
                     .foregroundColor(.white.opacity(0.18))
             }
@@ -191,7 +192,7 @@ struct OverlayView: View {
                     .progressViewStyle(.circular)
                     .scaleEffect(0.65)
                     .tint(.white.opacity(0.5))
-                Text(appState.modelProgressLabel.isEmpty ? "Загрузка модели..." : appState.modelProgressLabel)
+                Text(appState.modelProgressLabel.isEmpty ? t(.overlayStatusLoading) : appState.modelProgressLabel)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.55))
                 Spacer()
@@ -230,17 +231,17 @@ struct OverlayView: View {
     }
 
     private var statusText: String {
-        if appState.modelLoading      { return "Загрузка модели..." }
-        if appState.isRecording       { return appState.isVADMode ? "VAD · Запись" : "Запись" }
-        if appState.isTranscribing    { return "Распознавание..." }
-        if !appState.lastText.isEmpty { return "Готово" }
-        if appState.isVADMode         { return "VAD · Слушаю" }
-        return "Готово к записи"
+        if appState.modelLoading      { return t(.overlayStatusLoading) }
+        if appState.isRecording       { return appState.isVADMode ? t(.overlayStatusVADRecording) : t(.overlayStatusRecording) }
+        if appState.isTranscribing    { return t(.overlayStatusTranscribing) }
+        if !appState.lastText.isEmpty { return t(.overlayStatusDone) }
+        if appState.isVADMode         { return t(.overlayStatusVADListening) }
+        return t(.overlayStatusReady)
     }
 
     private var idleHint: String {
         let ptt = HotkeyManager.shared.pttBinding.displayString
-        return "Удерживайте \(ptt) для записи"
+        return String(format: t(.overlayHoldToRecord), ptt)
     }
 
     private func copyText() {

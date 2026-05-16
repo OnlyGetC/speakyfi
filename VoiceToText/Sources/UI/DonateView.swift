@@ -4,6 +4,7 @@ import AppKit
 struct DonateView: View {
     var onClose: () -> Void
 
+    @ObservedObject private var l10n = L10nState.shared
     @State private var copied = false
 
     private let walletAddress = "TXmqkxLcegZwmqh2Lw82G7wbxU3sC7Zx93"
@@ -20,7 +21,7 @@ struct DonateView: View {
             VStack(spacing: 0) {
                 // Заголовок
                 HStack {
-                    Text("Поддержать")
+                    Text(t(.donateTitle))
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.8))
                     Spacer()
@@ -55,7 +56,7 @@ struct DonateView: View {
                 }
 
                 // Подпись
-                Text("Поддержите автора прокормить этого толстяка")
+                Text(t(.donateCaption))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
@@ -90,7 +91,7 @@ struct DonateView: View {
                                 .animation(.easeInOut(duration: 0.15), value: copied)
                         }
                         .buttonStyle(.plain)
-                        .help("Скопировать адрес")
+                        .help(t(.donateCopyAddress))
                     }
                 }
                 .padding(.top, 14)

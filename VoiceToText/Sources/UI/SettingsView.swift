@@ -9,16 +9,18 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case language   = "language"
     case prompt     = "prompt"
     case correction = "correction"
+    case interface_ = "interface"
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .hotkeys:    return "Хоткеи"
-        case .model:      return "Модель"
-        case .language:   return "Язык"
-        case .prompt:     return "Промт"
-        case .correction: return "Коррекция"
+        case .hotkeys:    return t(.sectionHotkeys)
+        case .model:      return t(.sectionModel)
+        case .language:   return t(.sectionLanguage)
+        case .prompt:     return t(.sectionPrompt)
+        case .correction: return t(.sectionCorrection)
+        case .interface_: return t(.sectionInterface)
         }
     }
 
@@ -29,21 +31,18 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .language:   return "globe"
         case .prompt:     return "text.bubble"
         case .correction: return "wand.and.stars"
+        case .interface_: return "textformat"
         }
     }
 
     var info: String {
         switch self {
-        case .hotkeys:
-            return "Назначьте клавиши для Push-to-Talk (удерживать для записи) и переключения режима VAD (автоопределение речи)."
-        case .model:
-            return "Выберите способ транскрибации: локальная модель WhisperKit работает без интернета, облачные API требуют подключения и ключа."
-        case .language:
-            return "Язык, на котором говорите. Влияет на качество распознавания. «Авто» — Whisper определит язык самостоятельно."
-        case .prompt:
-            return "Подсказка передаётся в модель Whisper до транскрибации. Помогает правильно распознавать термины, имена и смешанный текст ru+en."
-        case .correction:
-            return "Постобработка текста через LLM после транскрибации. Исправляет ошибки распознавания и восстанавливает англицизмы. По умолчанию выключена."
+        case .hotkeys:    return t(.infoHotkeys)
+        case .model:      return t(.infoModel)
+        case .language:   return t(.infoLanguage)
+        case .prompt:     return t(.infoPrompt)
+        case .correction: return t(.infoCorrection)
+        case .interface_: return t(.infoInterface)
         }
     }
 }
@@ -66,7 +65,7 @@ struct HotkeyRecorderButton: View {
                 .frame(minWidth: 130, alignment: .leading)
             Spacer()
             Button(action: toggleRecording) {
-                Text(isRecording ? "Нажмите клавишу..." : binding.displayString)
+                Text(isRecording ? t(.hotkeyPressKey) : binding.displayString)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(isRecording ? .orange : .white)
                     .lineLimit(1)
@@ -88,7 +87,7 @@ struct HotkeyRecorderButton: View {
             }
             .buttonStyle(.plain)
             .disabled(binding == defaultBinding)
-            .help("Сбросить к значению по умолчанию")
+            .help(t(.hotkeyReset))
         }
     }
 
@@ -134,6 +133,7 @@ struct SettingsView: View {
     var onClose: () -> Void
     var onDonate: () -> Void
 
+    @ObservedObject private var l10n = L10nState.shared
     @State private var selectedSection: SettingsSection = .hotkeys
 
     var body: some View {
@@ -171,7 +171,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             // Заголовок
             HStack {
-                Text("Настройки")
+                Text(t(.settingsTitle))
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.7))
                 Spacer()
@@ -207,7 +207,7 @@ struct SettingsView: View {
                 HStack(spacing: 6) {
                     Text("🪙")
                         .font(.system(size: 12))
-                    Text("Поддержать")
+                    Text(t(.settingsSupportButton))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -268,6 +268,7 @@ struct SettingsView: View {
         case .language:   languageSection
         case .prompt:     promptSection
         case .correction: correctionSection
+        case .interface_: interfaceSection
         }
     }
 
@@ -275,11 +276,11 @@ struct SettingsView: View {
 
     private var hotkeysSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Хоткеи", info: SettingsSection.hotkeys.info)
-            HotkeyRecorderButton(label: "PTT (удерживать)", isForPTT: true,  binding: $hotkeys.pttBinding)
+            sectionTitle(t(.sectionHotkeys), info: SettingsSection.hotkeys.info)
+            HotkeyRecorderButton(label: t(.hotkeyPTT), isForPTT: true,  binding: $hotkeys.pttBinding)
             Divider().background(Color.white.opacity(0.06))
-            HotkeyRecorderButton(label: "Вкл/выкл VAD",     isForPTT: false, binding: $hotkeys.vadBinding)
-            Text("Нажмите кнопку → нажмите клавишу (или зажмите модификатор и отпустите). Esc — отмена.")
+            HotkeyRecorderButton(label: t(.hotkeyVAD), isForPTT: false, binding: $hotkeys.vadBinding)
+            Text(t(.hotkeyHint))
                 .font(.system(size: 11, design: .rounded))
                 .foregroundColor(.white.opacity(0.25))
                 .padding(.top, 4)
@@ -297,13 +298,13 @@ struct SettingsView: View {
 
     private var modelSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Модель", info: SettingsSection.model.info)
+            sectionTitle(t(.sectionModel), info: SettingsSection.model.info)
 
             HStack(spacing: 8) {
-                providerTab(label: "Локальная", isSelected: appState.transcriptionProvider == .local) {
+                providerTab(label: t(.modelLocal), isSelected: appState.transcriptionProvider == .local) {
                     appState.transcriptionProvider = .local
                 }
-                providerTab(label: "Облако (API)", isSelected: appState.transcriptionProvider == .cloud) {
+                providerTab(label: t(.modelCloud), isSelected: appState.transcriptionProvider == .cloud) {
                     appState.transcriptionProvider = .cloud
                 }
             }
@@ -362,7 +363,7 @@ struct SettingsView: View {
                         .font(.system(size: 13, design: .rounded))
                         .foregroundColor(isDownloaded ? .white.opacity(0.85) : .white.opacity(0.35))
                     if appState.isModelSwitching && isSelected {
-                        Text("загрузка...")
+                        Text(t(.modelLoading))
                             .font(.system(size: 10, design: .rounded))
                             .foregroundColor(.blue.opacity(0.7))
                     }
@@ -376,18 +377,18 @@ struct SettingsView: View {
                 ProgressView().scaleEffect(0.6).frame(width: 60)
             } else if isDownloaded {
                 if isSelected {
-                    Text("Активна")
+                    Text(t(.modelActive))
                         .font(.system(size: 10, weight: .medium, design: .rounded))
                         .foregroundColor(.green.opacity(0.7))
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(Color.green.opacity(0.1)).cornerRadius(6)
                 } else {
-                    Button("Выбрать") { appState.switchLocalModel(to: model) }
+                    Button(t(.modelSelect)) { appState.switchLocalModel(to: model) }
                         .font(.system(size: 11, design: .rounded))
                         .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
                 }
             } else {
-                Button("Скачать") { startDownload(model) }
+                Button(t(.modelDownload)) { startDownload(model) }
                     .font(.system(size: 11, design: .rounded))
                     .foregroundColor(.white.opacity(0.5))
                     .padding(.horizontal, 8).padding(.vertical, 4)
@@ -405,7 +406,7 @@ struct SettingsView: View {
 
     private func startDownload(_ model: LocalWhisperModel) {
         guard downloadingModel == nil else { return }
-        downloadingModel = model; downloadProgress = 0; downloadLabel = "Подготовка..."
+        downloadingModel = model; downloadProgress = 0; downloadLabel = t(.correctionLoadingModel)
         Task {
             await ModelManager.shared.downloadModel(model) { progress, label in
                 DispatchQueue.main.async { self.downloadProgress = progress; self.downloadLabel = label }
@@ -421,7 +422,7 @@ struct SettingsView: View {
             }
             Divider().background(Color.white.opacity(0.06))
             VStack(alignment: .leading, spacing: 6) {
-                Text("API-ключ для \(appState.selectedCloudProvider.displayName)")
+                Text("\(t(.modelApiKeyFor)) \(appState.selectedCloudProvider.displayName)")
                     .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.4))
                 HStack(spacing: 8) {
                     Group {
@@ -437,11 +438,11 @@ struct SettingsView: View {
                         Image(systemName: showApiKey ? "eye.slash" : "eye")
                             .font(.system(size: 12)).foregroundColor(.white.opacity(0.35))
                     }.buttonStyle(.plain)
-                    Button("Сохранить") { saveApiKey() }
+                    Button(t(.modelSave)) { saveApiKey() }
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
                 }
-                Text("Ключ хранится в Keychain, не покидает устройство.")
+                Text(t(.modelKeychainNote))
                     .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
             }
         }
@@ -460,7 +461,7 @@ struct SettingsView: View {
             }
             Spacer()
             if KeychainHelper.load(key: provider.keychainKey) != nil {
-                Text("ключ задан").font(.system(size: 10, design: .rounded)).foregroundColor(.green.opacity(0.6))
+                Text(t(.modelKeySet)).font(.system(size: 10, design: .rounded)).foregroundColor(.green.opacity(0.6))
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
@@ -484,9 +485,9 @@ struct SettingsView: View {
 
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Язык транскрибации", info: SettingsSection.language.info)
+            sectionTitle(t(.langTitle), info: SettingsSection.language.info)
             HStack {
-                Text("Язык")
+                Text(t(.interfaceLanguageLabel))
                     .font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.7))
                 Spacer()
                 Picker("", selection: $appState.transcriptionLanguage) {
@@ -494,7 +495,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu).frame(maxWidth: 220).colorScheme(.dark)
             }
-            Text("Выберите язык речи. «Авто» работает медленнее, но определяет язык самостоятельно.")
+            Text(t(.langHint))
                 .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.25))
         }
     }
@@ -504,7 +505,7 @@ struct SettingsView: View {
     private var promptSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                sectionTitle("Промт Whisper", info: SettingsSection.prompt.info)
+                sectionTitle(t(.promptTitle), info: SettingsSection.prompt.info)
                 Spacer()
                 Toggle("", isOn: $appState.promptEnabled)
                     .toggleStyle(.switch).scaleEffect(0.8).tint(.blue)
@@ -517,13 +518,13 @@ struct SettingsView: View {
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
                 HStack {
                     Spacer()
-                    Button("Сбросить") {
-                        appState.transcriptionPrompt = "Текст может содержать технические термины на английском языке."
+                    Button(t(.promptReset)) {
+                        appState.transcriptionPrompt = t(.promptDefaultText)
                     }
                     .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.35)).buttonStyle(.plain)
                 }
             } else {
-                Text("Включите, чтобы добавить подсказку модели Whisper.")
+                Text(t(.promptDisabledHint))
                     .font(.system(size: 12, design: .rounded)).foregroundColor(.white.opacity(0.25))
             }
         }
@@ -537,7 +538,7 @@ struct SettingsView: View {
 
     private var correctionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionTitle("Коррекция текста", info: SettingsSection.correction.info)
+            sectionTitle(t(.correctionTitle), info: SettingsSection.correction.info)
 
             // Выбор режима
             VStack(spacing: 6) {
@@ -596,9 +597,9 @@ struct SettingsView: View {
 
     private func correctionModeDescription(_ mode: CorrectionMode) -> String {
         switch mode {
-        case .off:    return "Текст вставляется как есть после транскрибации"
-        case .ollama: return "Локально, без интернета. Добавляет ~1–3 сек, нагружает RAM"
-        case .api:    return "Требует интернет и API-ключ. Быстро, но зависит от сети"
+        case .off:    return t(.correctionOffDescription)
+        case .ollama: return t(.correctionOllamaDescription)
+        case .api:    return t(.correctionApiDescription)
         }
     }
 
@@ -616,7 +617,7 @@ struct SettingsView: View {
                             .font(.system(size: 11, design: .rounded))
                             .foregroundColor(ollamaStatusColor)
                     }
-                    Text("Модель: \(OllamaManager.defaultModel) (~1.3 ГБ)")
+                    Text("\(t(.correctionOllamaModelLabel)) \(OllamaManager.defaultModel) (~1.3 ГБ)")
                         .font(.system(size: 11, design: .rounded))
                         .foregroundColor(.white.opacity(0.3))
                 }
@@ -639,7 +640,7 @@ struct SettingsView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.down.circle")
                             .font(.system(size: 13))
-                        Text("Установить Ollama")
+                        Text(t(.correctionInstallOllama))
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                     }
                     .foregroundColor(.white)
@@ -673,7 +674,7 @@ struct SettingsView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "arrow.down.circle")
                                     .font(.system(size: 13))
-                                Text("Скачать модель (\(OllamaManager.defaultModel))")
+                                Text("\(t(.correctionDownloadModel)) (\(OllamaManager.defaultModel))")
                                     .font(.system(size: 12, weight: .medium, design: .rounded))
                             }
                             .foregroundColor(.white)
@@ -687,7 +688,7 @@ struct SettingsView: View {
                 case .pulling(let progress):
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("Загрузка модели...")
+                            Text(t(.correctionLoadingModel))
                                 .font(.system(size: 11, design: .rounded))
                                 .foregroundColor(.white.opacity(0.5))
                             Spacer()
@@ -700,13 +701,13 @@ struct SettingsView: View {
                 case .ready:
                     EmptyView()
                 case .error(let msg):
-                    Text("Ошибка модели: \(msg)")
+                    Text(t(.correctionModelError) + msg)
                         .font(.system(size: 11, design: .rounded))
                         .foregroundColor(.red.opacity(0.7))
                 }
 
             case .error(let msg):
-                Text("Ошибка установки: \(msg)")
+                Text(t(.correctionInstallError) + msg)
                     .font(.system(size: 11, design: .rounded))
                     .foregroundColor(.red.opacity(0.7))
             }
@@ -715,21 +716,21 @@ struct SettingsView: View {
 
     private var ollamaStatusLabel: String {
         switch ollamaManager.installStatus {
-        case .notInstalled:        return "не установлена"
-        case .installing:          return "установка..."
-        case .error:               return "ошибка установки"
+        case .notInstalled:        return t(.correctionOllamaStatusNotInstalled)
+        case .installing:          return t(.correctionOllamaStatusInstalling)
+        case .error:               return t(.correctionOllamaStatusInstallError)
         case .installed:
             switch ollamaManager.serverStatus {
-            case .stopped:         return "остановлен"
-            case .starting:        return "запускается..."
-            case .stopping:        return "останавливается..."
-            case .error:           return "ошибка сервера"
+            case .stopped:         return t(.correctionOllamaStatusStopped)
+            case .starting:        return t(.correctionOllamaStatusStarting)
+            case .stopping:        return t(.correctionOllamaStatusStopping)
+            case .error:           return t(.correctionOllamaStatusServerError)
             case .running:
                 switch ollamaManager.modelStatus {
-                case .ready:       return "готово"
-                case .pulling:     return "загрузка модели..."
-                case .notPulled:   return "модель не скачана"
-                case .error:       return "ошибка модели"
+                case .ready:       return t(.correctionOllamaStatusReady)
+                case .pulling:     return t(.correctionOllamaStatusPulling)
+                case .notPulled:   return t(.correctionOllamaStatusNotPulled)
+                case .error:       return t(.correctionOllamaStatusModelError)
                 }
             }
         }
@@ -786,7 +787,7 @@ struct SettingsView: View {
 
             // API-ключ
             VStack(alignment: .leading, spacing: 6) {
-                Text("API-ключ (\(appState.correctionApiProvider.displayName))")
+                Text("\(t(.correctionApiKeyLabel)) (\(appState.correctionApiProvider.displayName))")
                     .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.4))
                 HStack(spacing: 8) {
                     Group {
@@ -802,15 +803,15 @@ struct SettingsView: View {
                         Image(systemName: showCorrectionApiKey ? "eye.slash" : "eye")
                             .font(.system(size: 12)).foregroundColor(.white.opacity(0.35))
                     }.buttonStyle(.plain)
-                    Button("Сохранить") { saveCorrectionApiKey() }
+                    Button(t(.correctionSave)) { saveCorrectionApiKey() }
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
                 }
                 if appState.correctionApiProvider == .groq {
-                    Text("Groq предоставляет бесплатный тир — groq.com")
+                    Text(t(.correctionGroqHint))
                         .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
                 }
-                Text("Ключ хранится в Keychain, не покидает устройство.")
+                Text(t(.correctionKeychainNote))
                     .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
             }
         }
@@ -819,11 +820,11 @@ struct SettingsView: View {
     private var correctionPromptSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("ПРОМТ КОРРЕКЦИИ")
+                Text(t(.correctionPromptLabel))
                     .font(.system(size: 10, weight: .semibold, design: .rounded)).foregroundColor(.white.opacity(0.3))
-                InfoButton(text: "Инструкция для LLM. Определяет что именно исправлять. Можно адаптировать под свои нужды.")
+                InfoButton(text: t(.correctionPromptInfoHint))
                 Spacer()
-                Button("Сбросить") { appState.correctionPrompt = defaultCorrectionPrompt }
+                Button(t(.correctionPromptReset)) { appState.correctionPrompt = defaultCorrectionPrompt }
                     .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.35)).buttonStyle(.plain)
             }
             TextEditor(text: $appState.correctionPrompt)
@@ -840,6 +841,28 @@ struct SettingsView: View {
     private func saveCorrectionApiKey() {
         if correctionApiKeyInput.isEmpty { KeychainHelper.delete(key: appState.correctionApiProvider.keychainKey) }
         else { KeychainHelper.save(key: appState.correctionApiProvider.keychainKey, value: correctionApiKeyInput) }
+    }
+
+    // MARK: Интерфейс
+
+    private var interfaceSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionTitle(t(.interfaceTitle), info: SettingsSection.interface_.info)
+            HStack {
+                Text(t(.interfaceLanguageLabel))
+                    .font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.7))
+                Spacer()
+                Picker("", selection: Binding(
+                    get: { L10nState.shared.language },
+                    set: { L10nState.shared.language = $0 }
+                )) {
+                    ForEach(AppLanguage.allCases) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .pickerStyle(.menu).frame(maxWidth: 160).colorScheme(.dark)
+            }
+        }
     }
 
     // MARK: - Helpers

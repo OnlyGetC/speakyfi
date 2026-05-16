@@ -5,6 +5,7 @@ struct SplashView: View {
     var onDonate: () -> Void
     var onClose: () -> Void
 
+    @ObservedObject private var l10n = L10nState.shared
     private let phrase: SplashPhrase = .random(isRussian: Locale.current.language.languageCode?.identifier == "ru")
 
     var body: some View {
@@ -49,7 +50,7 @@ struct SplashView: View {
                     onDonate()
                     onClose()
                 }) {
-                    Text("Поддержать")
+                    Text(t(.splashSupport))
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
                         .padding(.horizontal, 24)

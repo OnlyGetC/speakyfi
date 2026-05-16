@@ -4,6 +4,7 @@ import AppKit
 struct HistoryView: View {
     @ObservedObject var appState: AppState
     var onClose: () -> Void
+    @ObservedObject private var l10n = L10nState.shared
 
     var body: some View {
         ZStack {
@@ -19,7 +20,7 @@ struct HistoryView: View {
             VStack(spacing: 0) {
                 // Заголовок
                 HStack {
-                    Text("История")
+                    Text(t(.historyTitle))
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.75))
                     Spacer()
@@ -43,7 +44,7 @@ struct HistoryView: View {
 
                 if appState.history.isEmpty {
                     Spacer()
-                    Text("Нет записей")
+                    Text(t(.historyEmpty))
                         .font(.system(size: 12, design: .rounded))
                         .foregroundColor(.white.opacity(0.25))
                     Spacer()
