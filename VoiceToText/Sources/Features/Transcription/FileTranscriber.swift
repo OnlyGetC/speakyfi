@@ -1,8 +1,5 @@
 import Foundation
 import AVFoundation
-#if arch(arm64)
-import WhisperKit
-#endif
 
 // MARK: - Mode
 
@@ -18,6 +15,7 @@ enum FileTranscriberError: LocalizedError {
     case unsupportedFileType(String)
     case httpError(Int, String)
     case invalidResponse
+    case noTranscriber
 
     var errorDescription: String? {
         switch self {
@@ -29,6 +27,8 @@ enum FileTranscriberError: LocalizedError {
             return "Deepgram HTTP \(code): \(body)"
         case .invalidResponse:
             return "Failed to parse Deepgram response"
+        case .noTranscriber:
+            return "Local model is not loaded yet. Please wait for the model to finish loading."
         }
     }
 }
@@ -57,6 +57,9 @@ class FileTranscriber: ObservableObject {
     @Published var progress: Double = 0.0
     @Published var status: String = ""
 
+    /// Injected from AppState — reuses the already-loaded model, avoids double loading.
+    weak var transcriber: Transcriber?
+
     func transcribe(
         fileURL: URL,
         mode: FileTranscriptionMode,
@@ -70,100 +73,71 @@ class FileTranscriber: ObservableObject {
         }
     }
 
-    // MARK: - Local
+    // MARK: - Local (reuses the already-loaded Transcriber from AppState)
 
     private func transcribeLocal(fileURL: URL, language: String) async throws -> FileTranscriptionResult {
-#if arch(arm64)
-        return try await transcribeLocalWhisperKit(fileURL: fileURL, language: language)
-#else
-        return try await transcribeLocalWhisperCpp(fileURL: fileURL, language: language)
-#endif
-    }
-
-#if arch(arm64)
-    private func transcribeLocalWhisperKit(fileURL: URL, language: String) async throws -> FileTranscriptionResult {
-        status = "Initializing model..."
-        progress = 0.1
-
-        let whisperKit = try await WhisperKit(
-            verbose: false,
-            logLevel: .none,
-            prewarm: true,
-            load: true,
-            download: true
-        )
-
-        status = "Transcribing..."
-        progress = 0.3
-
-        var options = DecodingOptions()
-        if language != "auto" {
-            options.language = language
-        }
-        options.task = .transcribe
-
-        let results = try await whisperKit.transcribe(audioPath: fileURL.path, decodeOptions: options)
-
-        progress = 0.9
-        status = "Processing..."
-
-        let segments: [FileTranscriptionSegment] = results.flatMap { $0.segments }.map { seg in
-            FileTranscriptionSegment(
-                start: seg.start,
-                end: seg.end,
-                text: seg.text.trimmingCharacters(in: .whitespaces),
-                speaker: nil
-            )
+        guard let transcriber else {
+            throw FileTranscriberError.noTranscriber
         }
 
-        progress = 1.0
-        status = "Done"
-
-        return FileTranscriptionResult(segments: segments, hasSpeakers: false)
-    }
-#else
-    private func transcribeLocalWhisperCpp(fileURL: URL, language: String) async throws -> FileTranscriptionResult {
         status = "Loading audio..."
-        progress = 0.1
-
-        let asset = AVURLAsset(url: fileURL)
-        guard let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first else {
-            throw FileTranscriberError.unsupportedFileType(fileURL.pathExtension)
-        }
-        _ = audioTrack
+        progress = 0.15
 
         let audioData = try loadAudioAsPCM(fileURL: fileURL)
 
         status = "Transcribing..."
-        progress = 0.3
+        progress = 0.4
 
-        let backend = WhisperCppBackend()
-        await backend.loadModel(.base)
-        progress = 0.7
-
-        guard let text = await backend.transcribe(audio: audioData, language: language, prompt: nil) else {
+        guard let text = await transcriber.transcribe(audio: audioData, language: language) else {
             return FileTranscriptionResult(segments: [], hasSpeakers: false)
         }
 
         progress = 1.0
         status = "Done"
 
+        // Local transcription via Transcriber returns plain text without timestamps.
+        // We present it as a single segment.
         let segment = FileTranscriptionSegment(start: 0, end: 0, text: text, speaker: nil)
         return FileTranscriptionResult(segments: [segment], hasSpeakers: false)
     }
 
     private func loadAudioAsPCM(fileURL: URL) throws -> [Float] {
-        let file = try AVAudioFile(forReading: fileURL)
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
-        let frameCount = AVAudioFrameCount(file.length)
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+        // Convert any audio/video file to 16kHz mono Float32 PCM required by Whisper
+        let outputFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
+        let sourceFile = try AVAudioFile(forReading: fileURL)
+        let sourceFormat = sourceFile.processingFormat
+        let frameCount = AVAudioFrameCount(sourceFile.length)
+
+        guard let sourceBuffer = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: frameCount) else {
             return []
         }
-        try file.read(into: buffer)
-        let channelData = buffer.floatChannelData![0]
-        return Array(UnsafeBufferPointer(start: channelData, count: Int(buffer.frameLength)))
+        try sourceFile.read(into: sourceBuffer)
+
+        guard let converter = AVAudioConverter(from: sourceFormat, to: outputFormat) else {
+            return []
+        }
+
+        let targetFrameCount = AVAudioFrameCount(Double(frameCount) * 16000 / sourceFormat.sampleRate)
+        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: targetFrameCount) else {
+            return []
+        }
+
+        var error: NSError?
+        var inputConsumed = false
+        converter.convert(to: outputBuffer, error: &error) { _, outStatus in
+            if inputConsumed {
+                outStatus.pointee = .noDataNow
+                return nil
+            }
+            inputConsumed = true
+            outStatus.pointee = .haveData
+            return sourceBuffer
+        }
+
+        if let error { throw error }
+        let channelData = outputBuffer.floatChannelData![0]
+        return Array(UnsafeBufferPointer(start: channelData, count: Int(outputBuffer.frameLength)))
     }
-#endif
 
     // MARK: - Deepgram (with diarization)
 

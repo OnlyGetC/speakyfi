@@ -3,7 +3,7 @@ import AppKit
 
 // MARK: - Текущая версия приложения
 
-let appVersion = "1.6.1"
+let appVersion = "1.6.2"
 
 // MARK: - UpdateChecker
 

@@ -159,6 +159,10 @@ VoiceToText/Sources/
 
 ## Changelog
 
+### v1.6.2
+- Fixed: Local mode in File Transcription now reuses the already-loaded Whisper model from Settings — no more "failed to compile model" error on cancel or first use
+- Added: ⓘ info button in File Transcription toolbar explaining Local vs Deepgram modes
+
 ### v1.6.1
 - Fixed: File Transcription window now has a close (✕) button — previously the window could only be closed by restarting the app
 

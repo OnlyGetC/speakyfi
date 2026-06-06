@@ -151,10 +151,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.level = .floating
         window.isMovableByWindowBackground = true
         window.hasShadow = true
-        let view = FileTranscriptionView(onClose: { [weak window, weak self] in
-            window?.orderOut(nil)
-            self?.fileTranscriptionWindow = nil
-        })
+        let view = FileTranscriptionView(
+            appState: appState,
+            onClose: { [weak window, weak self] in
+                window?.orderOut(nil)
+                self?.fileTranscriptionWindow = nil
+            }
+        )
         window.contentView = NSHostingView(rootView: view)
         window.center()
         window.makeKeyAndOrderFront(nil)

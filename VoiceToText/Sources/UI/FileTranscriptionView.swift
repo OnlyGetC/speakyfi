@@ -9,6 +9,7 @@ struct FileTranscriptionView: View {
 
     // MARK: - Props
 
+    var appState: AppState? = nil
     var onClose: (() -> Void)? = nil
 
     // MARK: - State
@@ -30,6 +31,7 @@ struct FileTranscriptionView: View {
     @State private var showError: Bool = false
 
     @State private var transcriptionTask: Task<Void, Never>? = nil
+    @State private var showHelp: Bool = false
 
     // MARK: - Allowed extensions
 
@@ -108,6 +110,16 @@ struct FileTranscriptionView: View {
             Text("File Transcription")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.8))
+
+            Button(action: { showHelp.toggle() }) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: $showHelp, arrowEdge: .bottom) {
+                helpPopover
+            }
 
             Spacer()
 
@@ -410,6 +422,54 @@ struct FileTranscriptionView: View {
         .padding(.vertical, 10)
     }
 
+    // MARK: - Help Popover
+
+    private var helpPopover: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("How File Transcription works")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(.primary)
+
+            VStack(alignment: .leading, spacing: 10) {
+                helpRow(
+                    icon: "cpu",
+                    title: "Local (WhisperKit)",
+                    body: "Uses the same Whisper model you selected in Settings — no internet required. Transcription runs entirely on your Mac. No speaker detection."
+                )
+                helpRow(
+                    icon: "waveform.and.mic",
+                    title: "Deepgram + Speakers",
+                    body: "Sends the file to Deepgram cloud API. Detects who said what (diarization). Requires a Deepgram API key in Settings → Cloud."
+                )
+            }
+
+            Divider()
+
+            Text("Supported formats: mp3, mp4, wav, m4a, mov")
+                .font(.system(size: 11, design: .rounded))
+                .foregroundColor(.secondary)
+        }
+        .padding(16)
+        .frame(width: 320)
+    }
+
+    private func helpRow(icon: String, title: String, body: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.accentColor)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                Text(body)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     // MARK: - Actions
 
     private func openFilePanel() {
@@ -458,6 +518,7 @@ struct FileTranscriptionView: View {
     private func startTranscription(url: URL) {
         droppedFileURL = url
         fileName = url.lastPathComponent
+        transcriber.transcriber = appState?.transcriber
         viewState = .processing
 
         transcriptionTask = Task {
