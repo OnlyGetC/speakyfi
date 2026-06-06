@@ -196,7 +196,6 @@ struct FileTranscriptionView: View {
                 Image(systemName: "waveform")
                     .font(.system(size: 32, weight: .light))
                     .foregroundColor(.blue.opacity(0.8))
-                    .symbolEffect(.pulse)
 
                 Text(fileName)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
