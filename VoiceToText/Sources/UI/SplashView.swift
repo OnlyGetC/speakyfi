@@ -10,93 +10,103 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(phrase.background)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
+            Amber.bg
+            ScanlineOverlay()
 
             VStack(spacing: 0) {
+                // Header
                 HStack {
+                    Text("SPEAKYFI")
+                        .font(.amber(12, weight: .bold))
+                        .foregroundColor(Amber.bright)
+                        .amberGlow(4)
+                    Text(" [AMBER]")
+                        .font(.amber(9))
+                        .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
-                            .frame(width: 24, height: 24)
-                            .background(Color.white.opacity(0.08))
-                            .clipShape(Circle())
+                        Text("[✕]")
+                            .font(.amber(13, weight: .bold))
+                            .foregroundColor(Amber.bright)
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
+                .frame(height: 26)
+                .background(Amber.bgHeader)
 
-                Text(phrase.emoji)
-                    .font(.system(size: 64))
-                    .padding(.top, 12)
-
-                Text(phrase.text)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-                    .padding(.top, 16)
+                AmberDivider()
 
                 Spacer()
 
-                Button(action: {
-                    onDonate()
-                    onClose()
-                }) {
-                    Text(t(.splashSupport))
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
+                // Emoji — render as terminal art
+                Text(phrase.terminalIcon)
+                    .font(.amber(36))
+                    .foregroundColor(Amber.hot)
+                    .amberGlow(6)
+
+                // Phrase text
+                Text(phrase.text)
+                    .font(.amber(12))
+                    .foregroundColor(Amber.primary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 14)
+
+                Spacer()
+
+                AmberDivider()
+
+                // Support button
+                Button(action: { onDonate(); onClose() }) {
+                    Text("[ \(t(.splashSupport).uppercased()) ]")
+                        .font(.amber(11, weight: .bold))
+                        .foregroundColor(Amber.bright)
+                        .amberGlow(3)
                         .padding(.horizontal, 24)
-                        .padding(.vertical, 9)
-                        .background(Color.white.opacity(0.15))
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                        .padding(.vertical, 8)
+                        .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
-                .padding(.bottom, 24)
+                .padding(.vertical, 14)
             }
         }
         .frame(width: 340, height: 300)
-        .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 10)
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.10), radius: 16, x: 0, y: 6)
     }
 }
 
-// MARK: - Фразы
+// MARK: - Splash phrases
 
 private struct SplashPhrase {
-    let emoji: String
+    let terminalIcon: String  // ASCII-friendly replacement for emoji
     let text: String
-    let background: Color
     let lang: String
 
     static let all: [SplashPhrase] = [
-        // Русские
-        .init(emoji: "🥺", text: "Speakyfi всё ещё бесплатный...\nно разработчик уже смотрит на цены в Пятёрочке 👉👈", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "🥺", text: "Это приложение делал один человек в 3 ночи.\nПросто знай.", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "👀", text: "Speakyfi бесплатный,\nно автор не бесплатный 🥺", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "🥺", text: "Если это помогло — автор будет рад даже $1.\nЧестно.", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "👉👈", text: "Разработчик смотрит на кнопку доната\nи надеется 🥺", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "🥺", text: "Speakyfi работает.\nАвтор — почти.", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "✨", text: "Сделано с любовью и без бюджета 🥺", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "🎙", text: "Один человек. Один микрофон.\nНоль инвесторов. 🥺", background: .black.opacity(0.88), lang: "ru"),
-        .init(emoji: "🥺", text: "Speakyfi: бесплатно для тебя,\nдорого для автора.", background: .black.opacity(0.88), lang: "ru"),
+        // Russian
+        .init(terminalIcon: ">_", text: "Speakyfi всё ещё бесплатный...\nно разработчик уже смотрит на цены в Пятёрочке", lang: "ru"),
+        .init(terminalIcon: "C:\\", text: "Это приложение делал один человек в 3 ночи.\nПросто знай.", lang: "ru"),
+        .init(terminalIcon: ">>",  text: "Speakyfi бесплатный,\nно автор не бесплатный.", lang: "ru"),
+        .init(terminalIcon: ">_", text: "Если помогло — автор будет рад даже $1.\nЧестно.", lang: "ru"),
+        .init(terminalIcon: "[]",  text: "Разработчик смотрит на кнопку [SUPPORT]\nи надеется.", lang: "ru"),
+        .init(terminalIcon: "C:\\", text: "Speakyfi работает.\nАвтор — почти.", lang: "ru"),
+        .init(terminalIcon: ">>",  text: "Сделано с любовью и без бюджета.", lang: "ru"),
+        .init(terminalIcon: ">_", text: "Один человек. Один микрофон.\nНоль инвесторов.", lang: "ru"),
+        .init(terminalIcon: "[]",  text: "Speakyfi: бесплатно для тебя,\nдорого для автора.", lang: "ru"),
         // English
-        .init(emoji: "🥺", text: "Speakyfi is free.\nThe developer is not.", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "🌙", text: "Made at 3am by one person.\nJust so you know. 🥺", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "🎙", text: "One human. One mic.\nZero investors. 🥺", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "🥺", text: "Speakyfi works.\nThe developer — barely.", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "👉👈", text: "Still free. Still hoping. 🥺", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "✨", text: "Built with love and no budget. 🥺", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "🛒", text: "The app is free but the developer\nchecks prices at the grocery store 🥺👉👈", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "👀", text: "One person made this.\nHe's looking at the donate button right now. 🥺", background: .black.opacity(0.88), lang: "en"),
-        .init(emoji: "🥺", text: "Free for you.\nExpensive for the author.", background: .black.opacity(0.88), lang: "en"),
+        .init(terminalIcon: ">_", text: "Speakyfi is free.\nThe developer is not.", lang: "en"),
+        .init(terminalIcon: "C:\\", text: "Made at 3am by one person.\nJust so you know.", lang: "en"),
+        .init(terminalIcon: ">>",  text: "One human. One mic.\nZero investors.", lang: "en"),
+        .init(terminalIcon: ">_", text: "Speakyfi works.\nThe developer — barely.", lang: "en"),
+        .init(terminalIcon: "[]",  text: "Still free. Still hoping.", lang: "en"),
+        .init(terminalIcon: "C:\\", text: "Built with love and no budget.", lang: "en"),
+        .init(terminalIcon: ">>",  text: "The app is free but the developer\nchecks prices at the grocery store.", lang: "en"),
+        .init(terminalIcon: ">_", text: "One person made this.\nHe's looking at [SUPPORT] right now.", lang: "en"),
+        .init(terminalIcon: "[]",  text: "Free for you.\nExpensive for the author.", lang: "en"),
     ]
 
     static let russian: [SplashPhrase] = all.filter { $0.lang == "ru" }

@@ -13,21 +13,15 @@ struct OverlayView: View {
 
     var body: some View {
         ZStack {
-            // Background
             Amber.bg
-
-            // Scanlines
             ScanlineOverlay()
 
-            // Top header stripe
             VStack(spacing: 0) {
-                headerBar
-                    .background(Amber.bgHeader)
+                headerBar.background(Amber.bgHeader)
                 AmberDivider()
                 statusBar
                 AmberDivider()
-                contentArea
-                    .frame(maxWidth: .infinity)
+                contentArea.frame(maxWidth: .infinity)
                 AmberDivider()
                 footerBar
             }
@@ -57,7 +51,7 @@ struct OverlayView: View {
     private var headerBar: some View {
         HStack(spacing: 0) {
             Text("SPEAKYFI")
-                .font(.amber(11, weight: .bold))
+                .font(.amber(12, weight: .bold))
                 .foregroundColor(Amber.bright)
                 .amberGlow(5)
                 .padding(.leading, 10)
@@ -68,11 +62,21 @@ struct OverlayView: View {
 
             Spacer()
 
-            // Action buttons — text style, no icons
             amberBtn("HIST", action: onHistory)
             amberBtn("FILE", action: onFileTranscription)
             amberBtn("CFG",  action: onSettings)
-            amberBtn("X",    action: onClose)
+
+            // Close button — more visible, highlighted
+            Button(action: onClose) {
+                Text("[✕]")
+                    .font(.amber(11, weight: .bold))
+                    .foregroundColor(Amber.bright)
+                    .padding(.horizontal, 8)
+                    .frame(height: 24)
+                    .background(Amber.bgHeader.opacity(0.6))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
         .frame(height: 24)
     }
@@ -80,28 +84,26 @@ struct OverlayView: View {
     private func amberBtn(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text("[\(label)]")
-                .font(.amber(9))
-                .foregroundColor(Amber.dim)
+                .font(.amber(10))
+                .foregroundColor(Amber.primary)
                 .padding(.horizontal, 6)
                 .frame(height: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { inside in _ = inside } // visual feedback handled by color
     }
 
     // MARK: - Status bar
 
     private var statusBar: some View {
         HStack(spacing: 0) {
-            // Status indicator
             HStack(spacing: 6) {
                 Circle()
                     .fill(statusDotColor)
-                    .frame(width: 5, height: 5)
-                    .shadow(color: statusDotColor.opacity(0.8), radius: 3)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: statusDotColor.opacity(0.9), radius: 4)
                 Text(statusLabel)
-                    .font(.amber(9, weight: .medium))
+                    .font(.amber(10, weight: .medium))
                     .foregroundColor(statusLabelColor)
             }
             .padding(.leading, 10)
@@ -121,7 +123,7 @@ struct OverlayView: View {
                 .foregroundColor(Amber.dim)
                 .padding(.trailing, 10)
         }
-        .frame(height: 20)
+        .frame(height: 22)
     }
 
     // MARK: - Content area
@@ -144,13 +146,13 @@ struct OverlayView: View {
     // MARK: - Idle
 
     private var idleArea: some View {
-        VStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 5) {
             Text("C:\\> speakyfi.exe --listen")
-                .font(.amber(10))
+                .font(.amber(9))
                 .foregroundColor(Amber.faint)
             Text(idleHint)
-                .font(.amber(10))
-                .foregroundColor(Amber.dim)
+                .font(.amber(11))
+                .foregroundColor(Amber.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
@@ -161,7 +163,7 @@ struct OverlayView: View {
 
     private var recordingArea: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("C:\\> RECORDING... RELEASE [\(HotkeyManager.shared.pttBinding.displayString)] TO STOP")
+            Text("RECORDING... RELEASE [\(HotkeyManager.shared.pttBinding.displayString)]")
                 .font(.amber(9))
                 .foregroundColor(Amber.dim)
                 .lineLimit(1)
@@ -182,9 +184,9 @@ struct OverlayView: View {
             Text("C:\\>")
                 .font(.amber(10))
                 .foregroundColor(Amber.faint)
-            Text("PROCESSING")
-                .font(.amber(10))
-                .foregroundColor(Amber.dim)
+            Text("PROCESSING...")
+                .font(.amber(11))
+                .foregroundColor(Amber.primary)
             BlinkingCursor()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -198,14 +200,14 @@ struct OverlayView: View {
     private var resultArea: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("OUTPUT:")
-                .font(.amber(8))
+                .font(.amber(9))
                 .foregroundColor(Amber.dim)
                 .padding(.leading, 10)
                 .padding(.top, 8)
 
             Text(appState.lastText)
-                .font(.amber(11))
-                .foregroundColor(Amber.primary)
+                .font(.amber(12))
+                .foregroundColor(Amber.bright)
                 .amberGlow(2)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -214,8 +216,8 @@ struct OverlayView: View {
             HStack(spacing: 0) {
                 Button(action: copyText) {
                     Text(copied ? "[COPIED]" : "[COPY]")
-                        .font(.amber(9))
-                        .foregroundColor(copied ? Amber.ok : Amber.dim)
+                        .font(.amber(10))
+                        .foregroundColor(copied ? Amber.ok : Amber.primary)
                 }
                 .buttonStyle(.plain)
                 .animation(.easeInOut(duration: 0.15), value: copied)
@@ -225,7 +227,7 @@ struct OverlayView: View {
 
                 Text("INSERTED")
                     .font(.amber(9))
-                    .foregroundColor(Amber.faint)
+                    .foregroundColor(Amber.dim)
                     .padding(.trailing, 10)
             }
             .padding(.bottom, 8)
@@ -242,18 +244,17 @@ struct OverlayView: View {
                     .font(.amber(9))
                     .foregroundColor(Amber.faint)
                 Text(appState.modelProgressLabel.isEmpty ? "LOADING MODEL..." : appState.modelProgressLabel.uppercased())
-                    .font(.amber(9))
-                    .foregroundColor(Amber.dim)
+                    .font(.amber(10))
+                    .foregroundColor(Amber.primary)
                 Spacer()
                 Text("\(Int(appState.modelProgress * 100))%")
-                    .font(.amber(9, weight: .bold))
+                    .font(.amber(10, weight: .bold))
                     .foregroundColor(Amber.hot)
             }
 
-            // ASCII progress bar
             GeometryReader { geo in
                 let total = Int((geo.size.width - 20) / 7)
-                let filled = Int(Double(total) * appState.modelProgress)
+                let filled = max(0, Int(Double(total) * appState.modelProgress))
                 let empty = max(0, total - filled)
                 HStack(spacing: 0) {
                     Text("[")
@@ -283,15 +284,12 @@ struct OverlayView: View {
 
     private var footerBar: some View {
         HStack {
-            Text(footerLeft)
+            Text("[⌃]REC  [⌘,]CFG  [⌘H]HIST")
                 .font(.amber(8))
-                .foregroundColor(Amber.faint)
-                .lineLimit(1)
+                .foregroundColor(Amber.dim)
                 .padding(.leading, 10)
-
             Spacer()
-
-            Text(footerRight)
+            Text(appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL")
                 .font(.amber(8))
                 .foregroundColor(Amber.faint)
                 .padding(.trailing, 10)
@@ -302,24 +300,24 @@ struct OverlayView: View {
     // MARK: - Helpers
 
     private var statusDotColor: Color {
-        if appState.isRecording    { return Amber.rec }
-        if appState.isTranscribing { return Amber.warn }
-        if appState.modelLoading   { return Amber.warn }
+        if appState.isRecording       { return Color(red: 1, green: 0.3, blue: 0.3) }
+        if appState.isTranscribing    { return Amber.warn }
+        if appState.modelLoading      { return Amber.warn }
         if !appState.lastText.isEmpty { return Amber.ok }
         return Amber.dim
     }
 
     private var statusLabelColor: Color {
-        if appState.isRecording    { return Color(red: 1, green: 0.4, blue: 0.4) }
-        if appState.isTranscribing { return Amber.warn }
-        if appState.modelLoading   { return Amber.warn }
+        if appState.isRecording       { return Color(red: 1, green: 0.5, blue: 0.5) }
+        if appState.isTranscribing    { return Amber.warn }
+        if appState.modelLoading      { return Amber.warn }
         if !appState.lastText.isEmpty { return Amber.ok }
         return Amber.dim
     }
 
     private var statusLabel: String {
         if appState.modelLoading      { return "LOADING" }
-        if appState.isRecording       { return appState.isVADMode ? "VAD·REC" : "REC" }
+        if appState.isRecording       { return appState.isVADMode ? "VAD·REC" : "● REC" }
         if appState.isTranscribing    { return "PROCESSING" }
         if !appState.lastText.isEmpty { return "DONE" }
         if appState.isVADMode         { return "VAD·LISTEN" }
@@ -329,14 +327,6 @@ struct OverlayView: View {
     private var idleHint: String {
         let key = HotkeyManager.shared.pttBinding.displayString
         return "HOLD [\(key)] TO RECORD"
-    }
-
-    private var footerLeft: String {
-        "[CTRL]REC  [F1]HIST  [F2]FILE  [F10]CFG"
-    }
-
-    private var footerRight: String {
-        appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL"
     }
 
     private func copyText() {

@@ -11,109 +11,107 @@ struct DonateView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.black.opacity(0.88))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
+            Amber.bg
+            ScanlineOverlay()
 
             VStack(spacing: 0) {
-                // Заголовок
+                // Header
                 HStack {
-                    Text(t(.donateTitle))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
+                    Text("SPEAKYFI")
+                        .font(.amber(12, weight: .bold))
+                        .foregroundColor(Amber.bright)
+                        .amberGlow(4)
+                    Text(" // SUPPORT")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
-                            .frame(width: 24, height: 24)
-                            .background(Color.white.opacity(0.08))
-                            .clipShape(Circle())
+                        Text("[✕]")
+                            .font(.amber(13, weight: .bold))
+                            .foregroundColor(Amber.bright)
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
+                .frame(height: 26)
+                .background(Amber.bgHeader)
 
-                Divider().background(Color.white.opacity(0.08)).padding(.top, 14)
+                AmberDivider()
 
-                // Фото кота
+                // Cat image
                 if let catImage = loadCatImage() {
                     Image(nsImage: catImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 300, height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.top, 16)
+                        .frame(width: 300, height: 160)
+                        .clipped()
+                        .overlay(Rectangle().stroke(Amber.borderFaint, lineWidth: 1))
+                        .padding(.top, 14)
                         .padding(.horizontal, 20)
                 } else {
-                    Text("🐱")
-                        .font(.system(size: 64))
+                    Text(">_")
+                        .font(.amber(48))
+                        .foregroundColor(Amber.dim)
                         .padding(.top, 16)
                 }
 
-                // Подпись
+                // Caption
                 Text(t(.donateCaption))
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.85))
+                    .font(.amber(12, weight: .bold))
+                    .foregroundColor(Amber.bright)
+                    .amberGlow(2)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                // Кошелёк
-                VStack(spacing: 6) {
+                Spacer()
+
+                // Wallet
+                AmberDivider()
+
+                VStack(spacing: 8) {
                     Text("USDT TRC-20")
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.25))
+                        .font(.amber(9))
+                        .foregroundColor(Amber.dim)
 
                     HStack(spacing: 8) {
                         Text(walletAddress)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.6))
+                            .font(.amber(10))
+                            .foregroundColor(Amber.primary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 7)
-                            .background(Color.white.opacity(0.05))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                            )
+                            .padding(.vertical, 6)
+                            .overlay(Rectangle().stroke(Amber.borderFaint, lineWidth: 1))
 
                         Button(action: copyWallet) {
-                            Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 13))
-                                .foregroundColor(copied ? .green.opacity(0.8) : .white.opacity(0.4))
-                                .animation(.easeInOut(duration: 0.15), value: copied)
+                            Text(copied ? "[OK]" : "[CPY]")
+                                .font(.amber(10, weight: .bold))
+                                .foregroundColor(copied ? Amber.ok : Amber.primary)
                         }
                         .buttonStyle(.plain)
-                        .help(t(.donateCopyAddress))
+                        .animation(.easeInOut(duration: 0.15), value: copied)
                     }
                 }
-                .padding(.top, 14)
-                .padding(.bottom, 20)
                 .padding(.horizontal, 20)
+                .padding(.vertical, 12)
             }
         }
-        .frame(width: 340, height: 440)
-        .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 10)
+        .frame(width: 340, height: 420)
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.10), radius: 16, x: 0, y: 6)
     }
 
     private func copyWallet() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(walletAddress, forType: .string)
         copied = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            copied = false
-        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copied = false }
     }
 
     private func loadCatImage() -> NSImage? {
-        // SPM executable: ресурс лежит в VoiceToText_VoiceToText.bundle рядом с бинарём
         let execURL = URL(fileURLWithPath: CommandLine.arguments[0])
         let bundleURL = execURL.deletingLastPathComponent()
             .appendingPathComponent("VoiceToText_VoiceToText.bundle")
@@ -121,7 +119,6 @@ struct DonateView: View {
            let url = bundle.url(forResource: "cat", withExtension: "jpeg") {
             return NSImage(contentsOf: url)
         }
-        // Fallback: Bundle.main
         if let url = Bundle.main.url(forResource: "cat", withExtension: "jpeg") {
             return NSImage(contentsOf: url)
         }
