@@ -18,11 +18,11 @@ struct DonateView: View {
                 // Header
                 HStack {
                     Text("SPEAKYFI")
-                        .font(.amber(12, weight: .bold))
+                        .font(.amber(14, weight: .bold))
                         .foregroundColor(Amber.bright)
                         .amberGlow(4)
                     Text(" // SUPPORT")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
@@ -73,12 +73,12 @@ struct DonateView: View {
 
                 VStack(spacing: 8) {
                     Text("USDT TRC-20")
-                        .font(.amber(9))
+                        .font(.amber(11))
                         .foregroundColor(Amber.dim)
 
                     HStack(spacing: 8) {
                         Text(walletAddress)
-                            .font(.amber(10))
+                            .font(.amber(12))
                             .foregroundColor(Amber.primary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -88,7 +88,7 @@ struct DonateView: View {
 
                         Button(action: copyWallet) {
                             Text(copied ? "[OK]" : "[CPY]")
-                                .font(.amber(10, weight: .bold))
+                                .font(.amber(12, weight: .bold))
                                 .foregroundColor(copied ? Amber.ok : Amber.primary)
                         }
                         .buttonStyle(.plain)

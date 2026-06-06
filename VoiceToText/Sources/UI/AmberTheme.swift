@@ -7,8 +7,8 @@ enum Amber {
     static let primary    = Color(red: 0.80, green: 0.53, blue: 0.00) // #cc8800
     static let bright     = Color(red: 1.00, green: 0.67, blue: 0.00) // #ffaa00
     static let hot        = Color(red: 1.00, green: 0.53, blue: 0.00) // #ff8800
-    static let dim        = Color(red: 0.29, green: 0.19, blue: 0.00) // #4a3000
-    static let faint      = Color(red: 0.16, green: 0.12, blue: 0.00) // #291e00
+    static let dim        = Color(red: 0.55, green: 0.36, blue: 0.00) // #8c5c00
+    static let faint      = Color(red: 0.35, green: 0.23, blue: 0.00) // #593a00
     static let bg         = Color(red: 0.04, green: 0.03, blue: 0.00) // #0a0800
     static let bgHeader   = Color(red: 0.23, green: 0.16, blue: 0.00) // #3a2800
     static let border     = Color(red: 0.23, green: 0.16, blue: 0.00) // #3a2800

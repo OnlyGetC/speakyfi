@@ -72,25 +72,28 @@ struct FileTranscriptionView: View {
             // Close
             Button(action: { onClose?() }) {
                 Text("[X]")
-                    .font(.amber(10))
-                    .foregroundColor(Amber.dim)
+                    .font(.amber(13, weight: .bold))
+                    .foregroundColor(Amber.bright)
                     .padding(.horizontal, 8)
+                    .frame(height: 26)
+                    .background(Amber.bgHeader)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
             Text("SPEAKYFI")
-                .font(.amber(11, weight: .bold))
+                .font(.amber(13, weight: .bold))
                 .foregroundColor(Amber.bright)
                 .amberGlow(4)
 
             Text(" // FILE TRANSCRIPTION")
-                .font(.amber(10))
+                .font(.amber(12))
                 .foregroundColor(Amber.dim)
 
             // Help
             Button(action: { showHelp.toggle() }) {
                 Text("[?]")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.faint)
                     .padding(.horizontal, 6)
             }
@@ -104,12 +107,12 @@ struct FileTranscriptionView: View {
             // Mode picker
             HStack(spacing: 0) {
                 modeBtn("LOCAL", mode: .local)
-                Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+                Text("│").font(.amber(11)).foregroundColor(Amber.faint)
                 modeBtn("DEEPGRAM", mode: .deepgram)
             }
             .padding(.horizontal, 6)
 
-            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+            Text("│").font(.amber(11)).foregroundColor(Amber.faint)
 
             // Language
             Menu {
@@ -123,7 +126,7 @@ struct FileTranscriptionView: View {
                 Button("JA")   { selectedLanguage = "ja" }
             } label: {
                 Text("LANG:\(selectedLanguage.uppercased())")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.dim)
                     .padding(.horizontal, 8)
             }
@@ -136,7 +139,7 @@ struct FileTranscriptionView: View {
     private func modeBtn(_ label: String, mode: FileTranscriptionMode) -> some View {
         Button(action: { selectedMode = mode }) {
             Text(label)
-                .font(.amber(9, weight: selectedMode == mode ? .bold : .regular))
+                .font(.amber(11, weight: selectedMode == mode ? .bold : .regular))
                 .foregroundColor(selectedMode == mode ? Amber.bright : Amber.dim)
                 .padding(.horizontal, 6)
         }
@@ -159,20 +162,20 @@ struct FileTranscriptionView: View {
         VStack(spacing: 16) {
             VStack(spacing: 6) {
                 Text("C:\\> speakyfi.exe --transcribe-file")
-                    .font(.amber(10))
+                    .font(.amber(12))
                     .foregroundColor(Amber.faint)
                 Text(isTargeted ? "DROP FILE NOW" : "DROP AUDIO/VIDEO FILE HERE")
                     .font(.amber(13, weight: .bold))
                     .foregroundColor(isTargeted ? Amber.bright : Amber.primary)
                     .amberGlow(isTargeted ? 6 : 2)
                 Text("SUPPORTED: MP3  MP4  WAV  M4A  MOV")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.faint)
             }
 
             Button(action: openFilePanel) {
                 Text("[ OPEN FILE... ]")
-                    .font(.amber(11, weight: .bold))
+                    .font(.amber(13, weight: .bold))
                     .foregroundColor(Amber.bright)
                     .amberGlow(3)
                     .padding(.horizontal, 20)
@@ -202,10 +205,10 @@ struct FileTranscriptionView: View {
             // File info row
             HStack {
                 Text("FILE:")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.dim)
                 Text(fileName)
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -220,7 +223,7 @@ struct FileTranscriptionView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("C:\\> TRANSCRIBING...")
-                    .font(.amber(10))
+                    .font(.amber(12))
                     .foregroundColor(Amber.faint)
 
                 // ASCII progress bar
@@ -230,17 +233,17 @@ struct FileTranscriptionView: View {
                     let empty = max(0, total - filled)
                     HStack(spacing: 0) {
                         Text("[")
-                            .font(.amber(11))
+                            .font(.amber(13))
                             .foregroundColor(Amber.dim)
                         Text(String(repeating: "█", count: filled))
-                            .font(.amber(11))
+                            .font(.amber(13))
                             .foregroundColor(Amber.hot)
                             .amberGlow(2)
                         Text(String(repeating: "─", count: empty))
-                            .font(.amber(11))
+                            .font(.amber(13))
                             .foregroundColor(Amber.faint)
                         Text("] \(Int(transcriber.progress * 100))%")
-                            .font(.amber(11))
+                            .font(.amber(13))
                             .foregroundColor(Amber.dim)
                     }
                     .animation(.easeInOut(duration: 0.3), value: transcriber.progress)
@@ -248,7 +251,7 @@ struct FileTranscriptionView: View {
                 .frame(height: 16)
 
                 Text(transcriber.status.uppercased())
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.dim)
                     .animation(.easeInOut, value: transcriber.status)
             }
@@ -262,7 +265,7 @@ struct FileTranscriptionView: View {
             HStack {
                 Button(action: cancelTranscription) {
                     Text("[ CANCEL ]")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                 }
                 .buttonStyle(.plain)
@@ -298,19 +301,19 @@ struct FileTranscriptionView: View {
         HStack(alignment: .top, spacing: 10) {
             // Timestamp
             Text(formatTimestamp(start: segment.start, end: segment.end))
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.faint)
                 .frame(width: hasSpeakers ? 90 : 110, alignment: .leading)
 
             if hasSpeakers {
                 Text(speakerLabels[(segment.speaker ?? 0) % speakerLabels.count])
-                    .font(.amber(9, weight: .bold))
+                    .font(.amber(11, weight: .bold))
                     .foregroundColor(Amber.hot)
                     .frame(width: 20)
             }
 
             Text(segment.text)
-                .font(.amber(11))
+                .font(.amber(13))
                 .foregroundColor(Amber.primary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
@@ -326,20 +329,20 @@ struct FileTranscriptionView: View {
         HStack(spacing: 0) {
             Button(action: { copyToClipboard(result) }) {
                 Text("[ COPY ]")
-                    .font(.amber(10))
+                    .font(.amber(12))
                     .foregroundColor(Amber.dim)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
             }
             .buttonStyle(.plain)
 
-            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+            Text("│").font(.amber(11)).foregroundColor(Amber.faint)
 
             // Format picker
             ForEach(ExportFormat.allCases) { fmt in
                 Button(action: { exportFormat = fmt }) {
                     Text(fmt.rawValue.uppercased())
-                        .font(.amber(9, weight: exportFormat == fmt ? .bold : .regular))
+                        .font(.amber(11, weight: exportFormat == fmt ? .bold : .regular))
                         .foregroundColor(exportFormat == fmt ? Amber.bright : Amber.dim)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
@@ -347,11 +350,11 @@ struct FileTranscriptionView: View {
                 .buttonStyle(.plain)
             }
 
-            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+            Text("│").font(.amber(11)).foregroundColor(Amber.faint)
 
             Button(action: { exportResult(result) }) {
                 Text("[ EXPORT ]")
-                    .font(.amber(10, weight: .bold))
+                    .font(.amber(12, weight: .bold))
                     .foregroundColor(Amber.bright)
                     .amberGlow(2)
                     .padding(.horizontal, 10)
@@ -363,7 +366,7 @@ struct FileTranscriptionView: View {
 
             Button(action: resetToEmpty) {
                 Text("[ NEW FILE ]")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.faint)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -378,24 +381,24 @@ struct FileTranscriptionView: View {
     private var helpPopover: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("// HOW FILE TRANSCRIPTION WORKS")
-                .font(.amber(11, weight: .bold))
+                .font(.amber(13, weight: .bold))
                 .foregroundColor(Amber.bright)
 
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("[LOCAL]")
-                        .font(.amber(10, weight: .bold))
+                        .font(.amber(12, weight: .bold))
                         .foregroundColor(Amber.hot)
                     Text("Uses the Whisper model loaded in Settings.\nNo internet. No speaker detection.")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("[DEEPGRAM]")
-                        .font(.amber(10, weight: .bold))
+                        .font(.amber(12, weight: .bold))
                         .foregroundColor(Amber.hot)
                     Text("Sends file to Deepgram cloud API.\nDetects speakers. Requires API key in Settings.")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                 }
             }
@@ -403,7 +406,7 @@ struct FileTranscriptionView: View {
             Rectangle().fill(Amber.borderFaint).frame(height: 1)
 
             Text("FORMATS: MP3  MP4  WAV  M4A  MOV")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.faint)
         }
         .padding(14)

@@ -57,7 +57,7 @@ struct OverlayView: View {
                 .padding(.leading, 10)
 
             Text(" [AMBER]")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.dim)
 
             Spacer()
@@ -69,11 +69,11 @@ struct OverlayView: View {
             // Close button — more visible, highlighted
             Button(action: onClose) {
                 Text("[✕]")
-                    .font(.amber(11, weight: .bold))
+                    .font(.amber(13, weight: .bold))
                     .foregroundColor(Amber.bright)
                     .padding(.horizontal, 8)
                     .frame(height: 24)
-                    .background(Amber.bgHeader.opacity(0.6))
+                    .background(Amber.bgHeader)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -84,7 +84,7 @@ struct OverlayView: View {
     private func amberBtn(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text("[\(label)]")
-                .font(.amber(10))
+                .font(.amber(12))
                 .foregroundColor(Amber.primary)
                 .padding(.horizontal, 6)
                 .frame(height: 24)
@@ -103,23 +103,23 @@ struct OverlayView: View {
                     .frame(width: 6, height: 6)
                     .shadow(color: statusDotColor.opacity(0.9), radius: 4)
                 Text(statusLabel)
-                    .font(.amber(10, weight: .medium))
+                    .font(.amber(12, weight: .medium))
                     .foregroundColor(statusLabelColor)
             }
             .padding(.leading, 10)
 
             Text("  │  ")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.faint)
 
             Text("MODEL:\(appState.selectedLocalModel.rawValue.uppercased())")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.dim)
 
             Spacer()
 
             Text(appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.dim)
                 .padding(.trailing, 10)
         }
@@ -148,10 +148,10 @@ struct OverlayView: View {
     private var idleArea: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("C:\\> speakyfi.exe --listen")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.faint)
             Text(idleHint)
-                .font(.amber(11))
+                .font(.amber(13))
                 .foregroundColor(Amber.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,7 +164,7 @@ struct OverlayView: View {
     private var recordingArea: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("RECORDING... RELEASE [\(HotkeyManager.shared.pttBinding.displayString)]")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.dim)
                 .lineLimit(1)
 
@@ -182,10 +182,10 @@ struct OverlayView: View {
     private var transcribingArea: some View {
         HStack(spacing: 8) {
             Text("C:\\>")
-                .font(.amber(10))
+                .font(.amber(12))
                 .foregroundColor(Amber.faint)
             Text("PROCESSING...")
-                .font(.amber(11))
+                .font(.amber(13))
                 .foregroundColor(Amber.primary)
             BlinkingCursor()
         }
@@ -200,7 +200,7 @@ struct OverlayView: View {
     private var resultArea: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("OUTPUT:")
-                .font(.amber(9))
+                .font(.amber(11))
                 .foregroundColor(Amber.dim)
                 .padding(.leading, 10)
                 .padding(.top, 8)
@@ -216,7 +216,7 @@ struct OverlayView: View {
             HStack(spacing: 0) {
                 Button(action: copyText) {
                     Text(copied ? "[COPIED]" : "[COPY]")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(copied ? Amber.ok : Amber.primary)
                 }
                 .buttonStyle(.plain)
@@ -226,7 +226,7 @@ struct OverlayView: View {
                 Spacer()
 
                 Text("INSERTED")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.dim)
                     .padding(.trailing, 10)
             }
@@ -241,14 +241,14 @@ struct OverlayView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text("C:\\>")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.faint)
                 Text(appState.modelProgressLabel.isEmpty ? "LOADING MODEL..." : appState.modelProgressLabel.uppercased())
-                    .font(.amber(10))
+                    .font(.amber(12))
                     .foregroundColor(Amber.primary)
                 Spacer()
                 Text("\(Int(appState.modelProgress * 100))%")
-                    .font(.amber(10, weight: .bold))
+                    .font(.amber(12, weight: .bold))
                     .foregroundColor(Amber.hot)
             }
 
@@ -258,17 +258,17 @@ struct OverlayView: View {
                 let empty = max(0, total - filled)
                 HStack(spacing: 0) {
                     Text("[")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                     Text(String(repeating: "█", count: filled))
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.hot)
                         .amberGlow(2)
                     Text(String(repeating: "─", count: empty))
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.faint)
                     Text("]")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                 }
                 .animation(.easeInOut(duration: 0.3), value: appState.modelProgress)
@@ -285,12 +285,12 @@ struct OverlayView: View {
     private var footerBar: some View {
         HStack {
             Text("[⌃]REC  [⌘,]CFG  [⌘H]HIST")
-                .font(.amber(8))
+                .font(.amber(10))
                 .foregroundColor(Amber.dim)
                 .padding(.leading, 10)
             Spacer()
             Text(appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL")
-                .font(.amber(8))
+                .font(.amber(10))
                 .foregroundColor(Amber.faint)
                 .padding(.trailing, 10)
         }

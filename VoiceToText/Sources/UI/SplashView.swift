@@ -17,11 +17,11 @@ struct SplashView: View {
                 // Header
                 HStack {
                     Text("SPEAKYFI")
-                        .font(.amber(12, weight: .bold))
+                        .font(.amber(14, weight: .bold))
                         .foregroundColor(Amber.bright)
                         .amberGlow(4)
                     Text(" [AMBER]")
-                        .font(.amber(9))
+                        .font(.amber(11))
                         .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
@@ -49,7 +49,7 @@ struct SplashView: View {
 
                 // Phrase text
                 Text(phrase.text)
-                    .font(.amber(12))
+                    .font(.amber(14))
                     .foregroundColor(Amber.primary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -62,7 +62,7 @@ struct SplashView: View {
                 // Support button
                 Button(action: { onDonate(); onClose() }) {
                     Text("[ \(t(.splashSupport).uppercased()) ]")
-                        .font(.amber(11, weight: .bold))
+                        .font(.amber(13, weight: .bold))
                         .foregroundColor(Amber.bright)
                         .amberGlow(3)
                         .padding(.horizontal, 24)

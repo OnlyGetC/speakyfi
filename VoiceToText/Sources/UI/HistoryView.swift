@@ -15,17 +15,21 @@ struct HistoryView: View {
                 // Header
                 HStack {
                     Text("SPEAKYFI")
-                        .font(.amber(11, weight: .bold))
+                        .font(.amber(13, weight: .bold))
                         .foregroundColor(Amber.bright)
                         .amberGlow(4)
                     Text(" // HISTORY")
-                        .font(.amber(10))
+                        .font(.amber(12))
                         .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
                         Text("[X]")
-                            .font(.amber(10))
-                            .foregroundColor(Amber.dim)
+                            .font(.amber(13, weight: .bold))
+                            .foregroundColor(Amber.bright)
+                            .padding(.horizontal, 8)
+                            .frame(height: 26)
+                            .background(Amber.bgHeader)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -38,11 +42,11 @@ struct HistoryView: View {
                 // Status line
                 HStack {
                     Text("ENTRIES: \(appState.history.count)")
-                        .font(.amber(9))
+                        .font(.amber(11))
                         .foregroundColor(Amber.dim)
                     Spacer()
                     Text("LAST 50")
-                        .font(.amber(9))
+                        .font(.amber(11))
                         .foregroundColor(Amber.faint)
                 }
                 .padding(.horizontal, 12)
@@ -55,10 +59,10 @@ struct HistoryView: View {
                     Spacer()
                     VStack(spacing: 6) {
                         Text("C:\\> history --list")
-                            .font(.amber(10))
+                            .font(.amber(12))
                             .foregroundColor(Amber.faint)
                         Text("NO ENTRIES FOUND")
-                            .font(.amber(10))
+                            .font(.amber(12))
                             .foregroundColor(Amber.dim)
                         BlinkingCursor()
                     }
@@ -89,10 +93,10 @@ struct AmberHistoryRow: View {
         HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.timeString)
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(Amber.dim)
                 Text(entry.text)
-                    .font(.amber(11))
+                    .font(.amber(13))
                     .foregroundColor(Amber.primary)
                     .lineLimit(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -100,7 +104,7 @@ struct AmberHistoryRow: View {
 
             Button(action: copyEntry) {
                 Text(copied ? "[OK]" : "[CPY]")
-                    .font(.amber(9))
+                    .font(.amber(11))
                     .foregroundColor(copied ? Amber.ok : Amber.dim)
             }
             .buttonStyle(.plain)
