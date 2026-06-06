@@ -40,10 +40,10 @@ struct OverlayView: View {
 
     private var contentHeight: CGFloat {
         if appState.modelLoading      { return 148 }
-        if appState.isRecording       { return 130 }
-        if appState.isTranscribing    { return 108 }
+        if appState.isRecording       { return 148 }
+        if appState.isTranscribing    { return 120 }
         if !appState.lastText.isEmpty { return 168 }
-        return 98
+        return 130
     }
 
     // MARK: - Header bar
