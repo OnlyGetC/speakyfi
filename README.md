@@ -159,6 +159,9 @@ VoiceToText/Sources/
 
 ## Changelog
 
+### v1.6.1
+- Fixed: File Transcription window now has a close (✕) button — previously the window could only be closed by restarting the app
+
 ### v1.6
 - Транскрибация аудио/видео-файлов — drag & drop, таймкоды, диаризация спикеров через Deepgram API
 - Экспорт транскрипции в .txt, .md, .srt (SubRip с таймкодами)
