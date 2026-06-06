@@ -6,6 +6,7 @@ struct OverlayView: View {
     var onClose: () -> Void
     var onSettings: () -> Void
     var onHistory: () -> Void
+    var onFileTranscription: () -> Void
 
     @ObservedObject private var l10n = L10nState.shared
     @State private var copied = false
@@ -80,6 +81,9 @@ struct OverlayView: View {
 
             // История
             iconButton(systemName: "clock", action: onHistory)
+
+            // Файловая транскрипция
+            iconButton(systemName: "doc.waveform", action: onFileTranscription)
 
             // Настройки
             iconButton(systemName: "gearshape", action: onSettings)

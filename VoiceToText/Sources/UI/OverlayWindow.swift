@@ -11,7 +11,7 @@ class OverlayWindow: NSWindow {
     private let pillWidth: CGFloat = 340
     private let bottomMargin: CGFloat = 80
 
-    init(appState: AppState, onSettings: @escaping () -> Void, onHistory: @escaping () -> Void) {
+    init(appState: AppState, onSettings: @escaping () -> Void, onHistory: @escaping () -> Void, onFileTranscription: @escaping () -> Void) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 340, height: 90),
             styleMask: [.borderless, .fullSizeContentView],
@@ -31,7 +31,8 @@ class OverlayWindow: NSWindow {
             appState: appState,
             onClose: { [weak self] in self?.hide() },
             onSettings: onSettings,
-            onHistory: onHistory
+            onHistory: onHistory,
+            onFileTranscription: onFileTranscription
         )
         contentView = NSHostingView(rootView: view)
 

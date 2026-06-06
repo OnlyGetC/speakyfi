@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var historyWindow: NSWindow?
     var donateWindow: NSWindow?
     var splashWindow: NSWindow?
+    var fileTranscriptionWindow: NSWindow?
     let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -33,6 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: t(.menuMode), action: #selector(toggleVAD), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: t(.menuSettings), action: #selector(showSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "File Transcription…", action: #selector(showFileTranscriptionAction), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: t(.menuQuit), action: #selector(quit), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -56,7 +58,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         overlayWindow = OverlayWindow(
             appState: appState,
             onSettings: { [weak self] in self?.showSettings() },
-            onHistory: { [weak self] in self?.showHistory() }
+            onHistory: { [weak self] in self?.showHistory() },
+            onFileTranscription: { [weak self] in self?.showFileTranscription() }
         )
     }
 
@@ -127,6 +130,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         historyWindow = window
     }
+
+    // MARK: - File Transcription Window
+
+    func showFileTranscription() {
+        if let existing = fileTranscriptionWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let view = FileTranscriptionView()
+
+        let window = KeyableWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 560),
+            styleMask: [.borderless, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.level = .floating
+        window.isMovableByWindowBackground = true
+        window.hasShadow = true
+        window.contentView = NSHostingView(rootView: view)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        fileTranscriptionWindow = window
+    }
+
+    @objc func showFileTranscriptionAction() { showFileTranscription() }
 
     // MARK: - Donate Window
 

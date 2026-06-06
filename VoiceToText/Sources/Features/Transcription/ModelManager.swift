@@ -1,5 +1,7 @@
 import Foundation
+#if arch(arm64)
 import WhisperKit
+#endif
 
 // MARK: - Модели
 
@@ -43,6 +45,33 @@ enum ModelDownloadStatus: Equatable {
     case error(String)
 }
 
+#if !arch(arm64)
+// MARK: - Intel Models (GGML)
+
+enum IntelWhisperModel: String, CaseIterable, Identifiable {
+    case tiny   = "ggml-tiny"
+    case base   = "ggml-base"
+    case small  = "ggml-small"
+    case medium = "ggml-medium"
+
+    var id: String { rawValue }
+    var fileName: String { "\(rawValue).bin" }
+
+    var displayName: String {
+        switch self {
+        case .tiny:   return "Tiny (~75 МБ)"
+        case .base:   return "Base (~142 МБ)"
+        case .small:  return "Small (~466 МБ)"
+        case .medium: return "Medium (~1.5 ГБ)"
+        }
+    }
+
+    var downloadURL: URL {
+        URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(fileName)")!
+    }
+}
+#endif
+
 // MARK: - ModelManager
 
 @MainActor
@@ -61,6 +90,7 @@ class ModelManager: ObservableObject {
         refreshDownloadedStatus()
     }
 
+#if arch(arm64)
     // WhisperKit по умолчанию кладёт модели в ~/Documents/huggingface/models/argmaxinc/whisperkit-coreml/
     private var modelsDirectory: URL {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -110,4 +140,55 @@ class ModelManager: ObservableObject {
             onProgress(0.0, "Ошибка: \(error.localizedDescription)")
         }
     }
+#else
+    private var intelModelsDirectory: URL {
+        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documents.appendingPathComponent("speakyfi-models")
+    }
+
+    func refreshDownloadedStatus() {
+        for model in LocalWhisperModel.allCases {
+            if case .downloading = modelStatuses[model] { continue }
+            // Map LocalWhisperModel → IntelWhisperModel to check filesystem
+            let intelModel: IntelWhisperModel
+            switch model {
+            case .tiny:              intelModel = .tiny
+            case .base:              intelModel = .base
+            case .small:             intelModel = .small
+            case .medium, .large:    intelModel = .medium
+            }
+            let filePath = intelModelsDirectory.appendingPathComponent(intelModel.fileName)
+            modelStatuses[model] = fileManager.fileExists(atPath: filePath.path) ? .downloaded : .notDownloaded
+        }
+    }
+
+    func isDownloaded(_ model: LocalWhisperModel) -> Bool {
+        modelStatuses[model] == .downloaded
+    }
+
+    func downloadModel(_ model: LocalWhisperModel, onProgress: @escaping (Double, String) -> Void) async {
+        let intelModel: IntelWhisperModel
+        switch model {
+        case .tiny:              intelModel = .tiny
+        case .base:              intelModel = .base
+        case .small:             intelModel = .small
+        case .medium, .large:    intelModel = .medium
+        }
+        modelStatuses[model] = .downloading(progress: 0)
+        let backend = WhisperCppBackend()
+        backend.onProgress = { [weak self] progress, label in
+            Task { @MainActor in
+                self?.modelStatuses[model] = .downloading(progress: progress)
+                onProgress(progress, label)
+            }
+        }
+        await backend.loadModel(intelModel)
+        modelStatuses[model] = isIntelModelDownloaded(intelModel) ? .downloaded : .error("Download failed")
+    }
+
+    func isIntelModelDownloaded(_ model: IntelWhisperModel) -> Bool {
+        let path = intelModelsDirectory.appendingPathComponent(model.fileName)
+        return fileManager.fileExists(atPath: path.path)
+    }
+#endif
 }

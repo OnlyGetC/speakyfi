@@ -1,4 +1,6 @@
 import Foundation
+
+#if arch(arm64)
 import WhisperKit
 
 class Transcriber {
@@ -71,3 +73,42 @@ class Transcriber {
         }
     }
 }
+
+#else
+
+class Transcriber {
+    private let backend = WhisperCppBackend()
+    private var currentModel: LocalWhisperModel = .small
+    var onReady: (() -> Void)?
+    var onProgress: ((Double, String) -> Void)?
+
+    private func intelModel(for model: LocalWhisperModel) -> IntelWhisperModel {
+        switch model {
+        case .tiny:   return .tiny
+        case .base:   return .base
+        case .small:  return .small
+        case .medium: return .medium
+        case .large:  return .medium
+        }
+    }
+
+    func loadModel(_ model: LocalWhisperModel = .small) async {
+        currentModel = model
+        backend.onProgress = { [weak self] progress, label in
+            self?.onProgress?(progress, label)
+        }
+        await backend.loadModel(intelModel(for: model))
+        onReady?()
+    }
+
+    func switchModel(to model: LocalWhisperModel) async {
+        onProgress?(0.0, "Смена модели...")
+        await loadModel(model)
+    }
+
+    func transcribe(audio: [Float], language: String = "ru", prompt: String? = nil) async -> String? {
+        await backend.transcribe(audio: audio, language: language, prompt: prompt)
+    }
+}
+
+#endif
