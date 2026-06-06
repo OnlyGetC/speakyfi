@@ -7,6 +7,10 @@ import UniformTypeIdentifiers
 
 struct FileTranscriptionView: View {
 
+    // MARK: - Props
+
+    var onClose: (() -> Void)? = nil
+
     // MARK: - State
 
     @StateObject private var transcriber = FileTranscriber()
@@ -86,6 +90,17 @@ struct FileTranscriptionView: View {
 
     private var topToolbar: some View {
         HStack(spacing: 12) {
+            // Close button
+            Button(action: { onClose?() }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .frame(width: 22, height: 22)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+
             Image(systemName: "waveform.badge.mic")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.6))

@@ -140,8 +140,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let view = FileTranscriptionView()
-
         let window = KeyableWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 560),
             styleMask: [.borderless, .fullSizeContentView],
@@ -153,6 +151,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.level = .floating
         window.isMovableByWindowBackground = true
         window.hasShadow = true
+        let view = FileTranscriptionView(onClose: { [weak window, weak self] in
+            window?.orderOut(nil)
+            self?.fileTranscriptionWindow = nil
+        })
         window.contentView = NSHostingView(rootView: view)
         window.center()
         window.makeKeyAndOrderFront(nil)
