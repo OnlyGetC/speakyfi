@@ -13,103 +13,124 @@ struct OverlayView: View {
 
     var body: some View {
         ZStack {
-            // Blur background
-            VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            // Background
+            Amber.bg
 
-            // Subtle overlay tint
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.black.opacity(0.35))
+            // Scanlines
+            ScanlineOverlay()
 
-            // Border
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(borderColor.opacity(0.18), lineWidth: 1)
-
+            // Top header stripe
             VStack(spacing: 0) {
-                topBar
-                    .padding(.horizontal, 14)
-                    .padding(.top, 12)
-
-                if appState.modelLoading {
-                    loadingArea
-                        .padding(.horizontal, 14)
-                        .padding(.top, 8)
-                        .padding(.bottom, 14)
-                } else {
-                    contentArea
-                        .padding(.horizontal, 14)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-                }
+                headerBar
+                    .background(Amber.bgHeader)
+                AmberDivider()
+                statusBar
+                AmberDivider()
+                contentArea
+                    .frame(maxWidth: .infinity)
+                AmberDivider()
+                footerBar
             }
         }
         .frame(width: pillWidth, height: contentHeight)
-        .shadow(color: .black.opacity(0.4), radius: 24, x: 0, y: 8)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.isRecording)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.isTranscribing)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.lastText)
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.12), radius: 20, x: 0, y: 6)
+        .animation(.easeInOut(duration: 0.2), value: appState.isRecording)
+        .animation(.easeInOut(duration: 0.2), value: appState.isTranscribing)
+        .animation(.easeInOut(duration: 0.2), value: appState.lastText)
     }
 
     // MARK: - Layout
 
-    private var pillWidth: CGFloat { 340 }
+    private var pillWidth: CGFloat { 360 }
 
     private var contentHeight: CGFloat {
-        if appState.modelLoading      { return 140 }
-        if appState.isRecording       { return 120 }
-        if appState.isTranscribing    { return 100 }
-        if !appState.lastText.isEmpty { return 160 }
-        return 90
+        if appState.modelLoading      { return 148 }
+        if appState.isRecording       { return 130 }
+        if appState.isTranscribing    { return 108 }
+        if !appState.lastText.isEmpty { return 168 }
+        return 98
     }
 
-    // MARK: - Top Bar
+    // MARK: - Header bar
 
-    private var topBar: some View {
-        HStack(spacing: 6) {
-            // Статус-точка
-            Circle()
-                .fill(statusColor)
-                .frame(width: 7, height: 7)
-                .scaleEffect(appState.isRecording ? 1.2 : 1.0)
-                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: appState.isRecording)
+    private var headerBar: some View {
+        HStack(spacing: 0) {
+            Text("SPEAKYFI")
+                .font(.amber(11, weight: .bold))
+                .foregroundColor(Amber.bright)
+                .amberGlow(5)
+                .padding(.leading, 10)
 
-            Text(statusText)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.75))
+            Text(" [AMBER]")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
 
             Spacer()
 
-            // История
-            iconButton(systemName: "clock", action: onHistory)
-
-            // Файловая транскрипция
-            iconButton(systemName: "doc.waveform", action: onFileTranscription)
-
-            // Настройки
-            iconButton(systemName: "gearshape", action: onSettings)
-
-            // Закрыть
-            iconButton(systemName: "xmark", action: onClose)
+            // Action buttons — text style, no icons
+            amberBtn("HIST", action: onHistory)
+            amberBtn("FILE", action: onFileTranscription)
+            amberBtn("CFG",  action: onSettings)
+            amberBtn("X",    action: onClose)
         }
+        .frame(height: 24)
     }
 
-    private func iconButton(systemName: String, action: @escaping () -> Void) -> some View {
+    private func amberBtn(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
-                .frame(width: 20, height: 20)
-                .background(Color.white.opacity(0.06))
-                .clipShape(Circle())
+            Text("[\(label)]")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
+                .padding(.horizontal, 6)
+                .frame(height: 24)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { inside in _ = inside } // visual feedback handled by color
     }
 
-    // MARK: - Content Area
+    // MARK: - Status bar
+
+    private var statusBar: some View {
+        HStack(spacing: 0) {
+            // Status indicator
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(statusDotColor)
+                    .frame(width: 5, height: 5)
+                    .shadow(color: statusDotColor.opacity(0.8), radius: 3)
+                Text(statusLabel)
+                    .font(.amber(9, weight: .medium))
+                    .foregroundColor(statusLabelColor)
+            }
+            .padding(.leading, 10)
+
+            Text("  │  ")
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
+
+            Text("MODEL:\(appState.selectedLocalModel.rawValue.uppercased())")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
+
+            Spacer()
+
+            Text(appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
+                .padding(.trailing, 10)
+        }
+        .frame(height: 20)
+    }
+
+    // MARK: - Content area
 
     @ViewBuilder
     private var contentArea: some View {
-        if appState.isRecording {
+        if appState.modelLoading {
+            loadingArea
+        } else if appState.isRecording {
             recordingArea
         } else if appState.isTranscribing {
             transcribingArea
@@ -120,132 +141,202 @@ struct OverlayView: View {
         }
     }
 
-    private var recordingArea: some View {
-        WaveformView(level: appState.audioLevel, isRecording: true)
-            .frame(height: 44)
-            .transition(.opacity.combined(with: .scale(scale: 0.97)))
-    }
+    // MARK: - Idle
 
-    private var transcribingArea: some View {
-        HStack(spacing: 10) {
-            ProgressView()
-                .progressViewStyle(.circular)
-                .scaleEffect(0.65)
-                .tint(.white.opacity(0.5))
-            Text(t(.overlayTranscribing))
-                .font(.system(size: 12, design: .rounded))
-                .foregroundColor(.white.opacity(0.45))
+    private var idleArea: some View {
+        VStack(spacing: 4) {
+            Text("C:\\> speakyfi.exe --listen")
+                .font(.amber(10))
+                .foregroundColor(Amber.faint)
+            Text(idleHint)
+                .font(.amber(10))
+                .foregroundColor(Amber.dim)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - Recording
+
+    private var recordingArea: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("C:\\> RECORDING... RELEASE [\(HotkeyManager.shared.pttBinding.displayString)] TO STOP")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
+                .lineLimit(1)
+
+            AmberWaveformView(level: appState.audioLevel, isRecording: true)
+                .frame(height: 28)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .transition(.opacity)
     }
 
+    // MARK: - Transcribing
+
+    private var transcribingArea: some View {
+        HStack(spacing: 8) {
+            Text("C:\\>")
+                .font(.amber(10))
+                .foregroundColor(Amber.faint)
+            Text("PROCESSING")
+                .font(.amber(10))
+                .foregroundColor(Amber.dim)
+            BlinkingCursor()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .transition(.opacity)
+    }
+
+    // MARK: - Result
+
     private var resultArea: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Rectangle()
-                .fill(Color.white.opacity(0.06))
-                .frame(height: 1)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("OUTPUT:")
+                .font(.amber(8))
+                .foregroundColor(Amber.dim)
+                .padding(.leading, 10)
+                .padding(.top, 8)
 
             Text(appState.lastText)
-                .font(.system(size: 13, weight: .regular, design: .rounded))
-                .foregroundColor(.white.opacity(0.88))
+                .font(.amber(11))
+                .foregroundColor(Amber.primary)
+                .amberGlow(2)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 10)
 
-            HStack {
+            HStack(spacing: 0) {
                 Button(action: copyText) {
-                    HStack(spacing: 4) {
-                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 10))
-                        Text(copied ? t(.overlayCopied) : t(.overlayCopy))
-                            .font(.system(size: 11, weight: .medium, design: .rounded))
-                    }
-                    .foregroundColor(copied ? .green : .white.opacity(0.55))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(copied ? Color.green.opacity(0.12) : Color.white.opacity(0.07)))
+                    Text(copied ? "[COPIED]" : "[COPY]")
+                        .font(.amber(9))
+                        .foregroundColor(copied ? Amber.ok : Amber.dim)
                 }
                 .buttonStyle(.plain)
                 .animation(.easeInOut(duration: 0.15), value: copied)
+                .padding(.leading, 10)
 
                 Spacer()
 
-                Text(t(.overlayInserted))
-                    .font(.system(size: 10, design: .rounded))
-                    .foregroundColor(.white.opacity(0.18))
+                Text("INSERTED")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
+                    .padding(.trailing, 10)
             }
+            .padding(.bottom, 8)
         }
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
-    }
-
-    private var idleArea: some View {
-        Text(idleHint)
-            .font(.system(size: 11, design: .rounded))
-            .foregroundColor(.white.opacity(0.3))
-            .frame(maxWidth: .infinity, alignment: .center)
-            .transition(.opacity)
+        .transition(.opacity)
     }
 
     // MARK: - Loading
 
     private var loadingArea: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .scaleEffect(0.65)
-                    .tint(.white.opacity(0.5))
-                Text(appState.modelProgressLabel.isEmpty ? t(.overlayStatusLoading) : appState.modelProgressLabel)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.55))
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text("C:\\>")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
+                Text(appState.modelProgressLabel.isEmpty ? "LOADING MODEL..." : appState.modelProgressLabel.uppercased())
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 Spacer()
                 Text("\(Int(appState.modelProgress * 100))%")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.35))
+                    .font(.amber(9, weight: .bold))
+                    .foregroundColor(Amber.hot)
             }
 
+            // ASCII progress bar
             GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2).fill(Color.white.opacity(0.07)).frame(height: 3)
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
-                        .frame(width: geo.size.width * CGFloat(appState.modelProgress), height: 3)
-                        .animation(.easeInOut(duration: 0.3), value: appState.modelProgress)
+                let total = Int((geo.size.width - 20) / 7)
+                let filled = Int(Double(total) * appState.modelProgress)
+                let empty = max(0, total - filled)
+                HStack(spacing: 0) {
+                    Text("[")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
+                    Text(String(repeating: "█", count: filled))
+                        .font(.amber(10))
+                        .foregroundColor(Amber.hot)
+                        .amberGlow(2)
+                    Text(String(repeating: "─", count: empty))
+                        .font(.amber(10))
+                        .foregroundColor(Amber.faint)
+                    Text("]")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
                 }
+                .animation(.easeInOut(duration: 0.3), value: appState.modelProgress)
             }
-            .frame(height: 3)
+            .frame(height: 14)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - Footer bar
+
+    private var footerBar: some View {
+        HStack {
+            Text(footerLeft)
+                .font(.amber(8))
+                .foregroundColor(Amber.faint)
+                .lineLimit(1)
+                .padding(.leading, 10)
+
+            Spacer()
+
+            Text(footerRight)
+                .font(.amber(8))
+                .foregroundColor(Amber.faint)
+                .padding(.trailing, 10)
+        }
+        .frame(height: 18)
     }
 
     // MARK: - Helpers
 
-    private var statusColor: Color {
-        if appState.isRecording       { return .red }
-        if appState.isTranscribing    { return .orange }
-        if appState.modelLoading      { return .yellow }
-        if !appState.lastText.isEmpty { return Color(red: 0.3, green: 0.85, blue: 0.5) }
-        return Color.white.opacity(0.3)
+    private var statusDotColor: Color {
+        if appState.isRecording    { return Amber.rec }
+        if appState.isTranscribing { return Amber.warn }
+        if appState.modelLoading   { return Amber.warn }
+        if !appState.lastText.isEmpty { return Amber.ok }
+        return Amber.dim
     }
 
-    private var borderColor: Color {
-        if appState.isRecording    { return .red }
-        if appState.isTranscribing { return .orange }
-        return .white
+    private var statusLabelColor: Color {
+        if appState.isRecording    { return Color(red: 1, green: 0.4, blue: 0.4) }
+        if appState.isTranscribing { return Amber.warn }
+        if appState.modelLoading   { return Amber.warn }
+        if !appState.lastText.isEmpty { return Amber.ok }
+        return Amber.dim
     }
 
-    private var statusText: String {
-        if appState.modelLoading      { return t(.overlayStatusLoading) }
-        if appState.isRecording       { return appState.isVADMode ? t(.overlayStatusVADRecording) : t(.overlayStatusRecording) }
-        if appState.isTranscribing    { return t(.overlayStatusTranscribing) }
-        if !appState.lastText.isEmpty { return t(.overlayStatusDone) }
-        if appState.isVADMode         { return t(.overlayStatusVADListening) }
-        return t(.overlayStatusReady)
+    private var statusLabel: String {
+        if appState.modelLoading      { return "LOADING" }
+        if appState.isRecording       { return appState.isVADMode ? "VAD·REC" : "REC" }
+        if appState.isTranscribing    { return "PROCESSING" }
+        if !appState.lastText.isEmpty { return "DONE" }
+        if appState.isVADMode         { return "VAD·LISTEN" }
+        return "READY"
     }
 
     private var idleHint: String {
-        let ptt = HotkeyManager.shared.pttBinding.displayString
-        return String(format: t(.overlayHoldToRecord), ptt)
+        let key = HotkeyManager.shared.pttBinding.displayString
+        return "HOLD [\(key)] TO RECORD"
+    }
+
+    private var footerLeft: String {
+        "[CTRL]REC  [F1]HIST  [F2]FILE  [F10]CFG"
+    }
+
+    private var footerRight: String {
+        appState.transcriptionProvider == .cloud ? "CLOUD" : "LOCAL"
     }
 
     private func copyText() {
@@ -256,22 +347,17 @@ struct OverlayView: View {
     }
 }
 
-// MARK: - NSVisualEffectView wrapper
+// MARK: - Blinking cursor
 
-struct VisualEffectBlur: NSViewRepresentable {
-    var material: NSVisualEffectView.Material
-    var blendingMode: NSVisualEffectView.BlendingMode
+struct BlinkingCursor: View {
+    @State private var visible = true
+    let timer = Timer.publish(every: 0.6, on: .main, in: .common).autoconnect()
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let v = NSVisualEffectView()
-        v.material = material
-        v.blendingMode = blendingMode
-        v.state = .active
-        return v
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
-        nsView.blendingMode = blendingMode
+    var body: some View {
+        Rectangle()
+            .fill(Amber.primary)
+            .frame(width: 7, height: 12)
+            .opacity(visible ? 1 : 0)
+            .onReceive(timer) { _ in visible.toggle() }
     }
 }

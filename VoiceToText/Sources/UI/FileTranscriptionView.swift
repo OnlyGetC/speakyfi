@@ -3,8 +3,6 @@ import AppKit
 import Foundation
 import UniformTypeIdentifiers
 
-// MARK: - FileTranscriptionView
-
 struct FileTranscriptionView: View {
 
     // MARK: - Props
@@ -29,58 +27,37 @@ struct FileTranscriptionView: View {
 
     @State private var errorMessage: String? = nil
     @State private var showError: Bool = false
-
-    @State private var transcriptionTask: Task<Void, Never>? = nil
     @State private var showHelp: Bool = false
 
-    // MARK: - Allowed extensions
+    @State private var transcriptionTask: Task<Void, Never>? = nil
 
     private let allowedExtensions = ["mp3", "mp4", "wav", "m4a", "mov"]
 
-    // MARK: - View State
+    enum ViewState { case empty, processing, result }
 
-    enum ViewState {
-        case empty
-        case processing
-        case result
-    }
-
-    // MARK: - Speaker Colors
-
-    private let speakerColors: [Color] = [
-        Color.blue.opacity(0.18),
-        Color.purple.opacity(0.18),
-        Color.green.opacity(0.18),
-        Color.orange.opacity(0.18),
-        Color.pink.opacity(0.18),
-        Color.teal.opacity(0.18)
-    ]
+    private let speakerLabels = ["S1", "S2", "S3", "S4", "S5", "S6"]
 
     // MARK: - Body
 
     var body: some View {
         ZStack {
-            // Background
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
+            Amber.bg
+            ScanlineOverlay()
 
             VStack(spacing: 0) {
                 topToolbar
-                Divider()
-                    .background(Color.white.opacity(0.08))
+                AmberDivider()
 
                 switch viewState {
-                case .empty:
-                    emptyStateView
-                case .processing:
-                    processingView
+                case .empty:      emptyStateView
+                case .processing: processingView
                 case .result:
-                    if let result = result {
-                        resultView(result)
-                    }
+                    if let result = result { resultView(result) }
                 }
             }
         }
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.10), radius: 16, x: 0, y: 6)
         .alert("Error", isPresented: $showError, actions: {
             Button("OK", role: .cancel) { }
         }, message: {
@@ -91,30 +68,31 @@ struct FileTranscriptionView: View {
     // MARK: - Top Toolbar
 
     private var topToolbar: some View {
-        HStack(spacing: 12) {
-            // Close button
+        HStack(spacing: 0) {
+            // Close
             Button(action: { onClose?() }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                    .frame(width: 22, height: 22)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(Circle())
+                Text("[X]")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                    .padding(.horizontal, 8)
             }
             .buttonStyle(.plain)
 
-            Image(systemName: "waveform.badge.mic")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
+            Text("SPEAKYFI")
+                .font(.amber(11, weight: .bold))
+                .foregroundColor(Amber.bright)
+                .amberGlow(4)
 
-            Text("File Transcription")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
+            Text(" // FILE TRANSCRIPTION")
+                .font(.amber(10))
+                .foregroundColor(Amber.dim)
 
+            // Help
             Button(action: { showHelp.toggle() }) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.35))
+                Text("[?]")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
+                    .padding(.horizontal, 6)
             }
             .buttonStyle(.plain)
             .popover(isPresented: $showHelp, arrowEdge: .bottom) {
@@ -124,30 +102,46 @@ struct FileTranscriptionView: View {
             Spacer()
 
             // Mode picker
-            Picker("Mode", selection: $selectedMode) {
-                Text("Local (WhisperKit)").tag(FileTranscriptionMode.local)
-                Text("Deepgram + Speakers").tag(FileTranscriptionMode.deepgram)
+            HStack(spacing: 0) {
+                modeBtn("LOCAL", mode: .local)
+                Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+                modeBtn("DEEPGRAM", mode: .deepgram)
             }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 260)
-            .disabled(viewState == .processing)
+            .padding(.horizontal, 6)
 
-            // Language picker
-            Picker("Language", selection: $selectedLanguage) {
-                Text("Auto").tag("auto")
-                Text("Russian").tag("ru")
-                Text("English").tag("en")
-                Text("German").tag("de")
-                Text("Spanish").tag("es")
-                Text("French").tag("fr")
-                Text("Chinese").tag("zh")
-                Text("Japanese").tag("ja")
+            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+
+            // Language
+            Menu {
+                Button("AUTO") { selectedLanguage = "auto" }
+                Button("RU")   { selectedLanguage = "ru" }
+                Button("EN")   { selectedLanguage = "en" }
+                Button("DE")   { selectedLanguage = "de" }
+                Button("ES")   { selectedLanguage = "es" }
+                Button("FR")   { selectedLanguage = "fr" }
+                Button("ZH")   { selectedLanguage = "zh" }
+                Button("JA")   { selectedLanguage = "ja" }
+            } label: {
+                Text("LANG:\(selectedLanguage.uppercased())")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
+                    .padding(.horizontal, 8)
             }
-            .frame(maxWidth: 110)
             .disabled(viewState == .processing)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .frame(height: 26)
+        .background(Amber.bgHeader)
+    }
+
+    private func modeBtn(_ label: String, mode: FileTranscriptionMode) -> some View {
+        Button(action: { selectedMode = mode }) {
+            Text(label)
+                .font(.amber(9, weight: selectedMode == mode ? .bold : .regular))
+                .foregroundColor(selectedMode == mode ? Amber.bright : Amber.dim)
+                .padding(.horizontal, 6)
+        }
+        .buttonStyle(.plain)
+        .disabled(viewState == .processing)
     }
 
     // MARK: - Empty State
@@ -162,52 +156,40 @@ struct FileTranscriptionView: View {
     }
 
     private var dropZone: some View {
-        VStack(spacing: 20) {
-            Image(systemName: isTargeted ? "arrow.down.doc.fill" : "doc.badge.plus")
-                .font(.system(size: 52, weight: .light))
-                .foregroundColor(isTargeted ? .blue : .white.opacity(0.35))
-                .animation(.easeInOut(duration: 0.15), value: isTargeted)
-
+        VStack(spacing: 16) {
             VStack(spacing: 6) {
-                Text("Drop audio or video file here")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundColor(isTargeted ? .blue : .white.opacity(0.75))
-
-                Text("Supported: mp3, mp4, wav, m4a, mov")
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.white.opacity(0.35))
+                Text("C:\\> speakyfi.exe --transcribe-file")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.faint)
+                Text(isTargeted ? "DROP FILE NOW" : "DROP AUDIO/VIDEO FILE HERE")
+                    .font(.amber(13, weight: .bold))
+                    .foregroundColor(isTargeted ? Amber.bright : Amber.primary)
+                    .amberGlow(isTargeted ? 6 : 2)
+                Text("SUPPORTED: MP3  MP4  WAV  M4A  MOV")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
 
             Button(action: openFilePanel) {
-                HStack(spacing: 6) {
-                    Image(systemName: "folder")
-                        .font(.system(size: 12))
-                    Text("Open File…")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.blue.opacity(0.75))
-                )
+                Text("[ OPEN FILE... ]")
+                    .font(.amber(11, weight: .bold))
+                    .foregroundColor(Amber.bright)
+                    .amberGlow(3)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
-        .frame(maxWidth: 480, maxHeight: 280)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(isTargeted ? Color.blue.opacity(0.08) : Color.white.opacity(0.04))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(
-                            isTargeted ? Color.blue.opacity(0.7) : Color.white.opacity(0.12),
-                            style: StrokeStyle(lineWidth: isTargeted ? 2 : 1.5, dash: [6, 4])
-                        )
+        .frame(maxWidth: 480, maxHeight: 260)
+        .overlay(
+            Rectangle()
+                .stroke(
+                    isTargeted ? Amber.bright : Amber.borderFaint,
+                    style: StrokeStyle(lineWidth: isTargeted ? 2 : 1, dash: [6, 4])
                 )
         )
-        .animation(.easeInOut(duration: 0.15), value: isTargeted)
+        .animation(.easeInOut(duration: 0.12), value: isTargeted)
         .onDrop(of: [UTType.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers: providers)
         }
@@ -216,58 +198,79 @@ struct FileTranscriptionView: View {
     // MARK: - Processing State
 
     private var processingView: some View {
-        VStack(spacing: 28) {
-            Spacer()
-
-            VStack(spacing: 8) {
-                Image(systemName: "waveform")
-                    .font(.system(size: 32, weight: .light))
-                    .foregroundColor(.blue.opacity(0.8))
-
+        VStack(alignment: .leading, spacing: 0) {
+            // File info row
+            HStack {
+                Text("FILE:")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 Text(fileName)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.amber(9))
+                    .foregroundColor(Amber.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                    .frame(maxWidth: 360)
+                Spacer()
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
 
-            VStack(spacing: 10) {
-                ProgressView(value: transcriber.progress)
-                    .progressViewStyle(.linear)
-                    .tint(.blue)
-                    .frame(maxWidth: 360)
-
-                Text(transcriber.status)
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.white.opacity(0.45))
-                    .animation(.easeInOut, value: transcriber.status)
-            }
-
-            Button(action: cancelTranscription) {
-                HStack(spacing: 6) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .medium))
-                    Text("Cancel")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.white.opacity(0.7))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white.opacity(0.08))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(.plain)
+            AmberDivider()
 
             Spacer()
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("C:\\> TRANSCRIBING...")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.faint)
+
+                // ASCII progress bar
+                GeometryReader { geo in
+                    let total = Int((geo.size.width - 16) / 8)
+                    let filled = Int(Double(total) * transcriber.progress)
+                    let empty = max(0, total - filled)
+                    HStack(spacing: 0) {
+                        Text("[")
+                            .font(.amber(11))
+                            .foregroundColor(Amber.dim)
+                        Text(String(repeating: "█", count: filled))
+                            .font(.amber(11))
+                            .foregroundColor(Amber.hot)
+                            .amberGlow(2)
+                        Text(String(repeating: "─", count: empty))
+                            .font(.amber(11))
+                            .foregroundColor(Amber.faint)
+                        Text("] \(Int(transcriber.progress * 100))%")
+                            .font(.amber(11))
+                            .foregroundColor(Amber.dim)
+                    }
+                    .animation(.easeInOut(duration: 0.3), value: transcriber.progress)
+                }
+                .frame(height: 16)
+
+                Text(transcriber.status.uppercased())
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
+                    .animation(.easeInOut, value: transcriber.status)
+            }
+            .padding(.horizontal, 12)
+
+            Spacer()
+
+            AmberDivider()
+
+            // Cancel
+            HStack {
+                Button(action: cancelTranscription) {
+                    Text("[ CANCEL ]")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                Spacer()
+            }
         }
-        .padding(24)
     }
 
     // MARK: - Result State
@@ -275,199 +278,138 @@ struct FileTranscriptionView: View {
     @ViewBuilder
     private func resultView(_ result: FileTranscriptionResult) -> some View {
         VStack(spacing: 0) {
-            // Segments scroll area
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: 0) {
                     ForEach(Array(result.segments.enumerated()), id: \.offset) { index, segment in
                         segmentRow(segment: segment, index: index, hasSpeakers: result.hasSpeakers)
+                        AmberDivider()
                     }
                 }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
             }
 
-            Divider()
-                .background(Color.white.opacity(0.08))
-
-            // Bottom toolbar
+            AmberDivider()
             resultToolbar(result)
         }
     }
 
     @ViewBuilder
     private func segmentRow(segment: FileTranscriptionSegment, index: Int, hasSpeakers: Bool) -> some View {
-        let timestamp = formatTimestamp(start: segment.start, end: segment.end)
-        let bgColor: Color = hasSpeakers
-            ? speakerColors[(segment.speaker ?? 0) % speakerColors.count]
-            : (index % 2 == 0 ? Color.white.opacity(0.03) : Color.clear)
-
         HStack(alignment: .top, spacing: 10) {
+            // Timestamp
+            Text(formatTimestamp(start: segment.start, end: segment.end))
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
+                .frame(width: hasSpeakers ? 90 : 110, alignment: .leading)
+
             if hasSpeakers {
-                Text("S\((segment.speaker ?? 0) + 1)")
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundColor(speakerLabelColor(for: segment.speaker ?? 0))
-                    .frame(width: 22, height: 22)
-                    .background(speakerLabelColor(for: segment.speaker ?? 0).opacity(0.15))
-                    .clipShape(Circle())
+                Text(speakerLabels[(segment.speaker ?? 0) % speakerLabels.count])
+                    .font(.amber(9, weight: .bold))
+                    .foregroundColor(Amber.hot)
+                    .frame(width: 20)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(timestamp)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.3))
-
-                Text(segment.text)
-                    .font(.system(size: 13, design: .rounded))
-                    .foregroundColor(.white.opacity(0.85))
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer()
+            Text(segment.text)
+                .font(.amber(11))
+                .foregroundColor(Amber.primary)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(bgColor)
-        )
-    }
-
-    private func speakerLabelColor(for speaker: Int) -> Color {
-        let colors: [Color] = [.blue, .purple, .green, .orange, .pink, .teal]
-        return colors[speaker % colors.count]
+        .padding(.vertical, 6)
+        .background(index % 2 == 0 ? Amber.bg : Amber.bgHeader.opacity(0.3))
     }
 
     @ViewBuilder
     private func resultToolbar(_ result: FileTranscriptionResult) -> some View {
-        HStack(spacing: 12) {
-            // Copy button
+        HStack(spacing: 0) {
             Button(action: { copyToClipboard(result) }) {
-                HStack(spacing: 5) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 12))
-                    Text("Copy")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.white.opacity(0.75))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.07))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
+                Text("[ COPY ]")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
             }
             .buttonStyle(.plain)
 
-            Divider()
-                .frame(height: 18)
-                .background(Color.white.opacity(0.12))
+            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
 
             // Format picker
-            Picker("Format", selection: $exportFormat) {
-                ForEach(ExportFormat.allCases) { fmt in
-                    Text(fmt.rawValue.uppercased()).tag(fmt)
+            ForEach(ExportFormat.allCases) { fmt in
+                Button(action: { exportFormat = fmt }) {
+                    Text(fmt.rawValue.uppercased())
+                        .font(.amber(9, weight: exportFormat == fmt ? .bold : .regular))
+                        .foregroundColor(exportFormat == fmt ? Amber.bright : Amber.dim)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
                 }
+                .buttonStyle(.plain)
             }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 180)
 
-            // Export button
+            Text("│").font(.amber(9)).foregroundColor(Amber.faint)
+
             Button(action: { exportResult(result) }) {
-                HStack(spacing: 5) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 12))
-                    Text("Export")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.75))
-                )
+                Text("[ EXPORT ]")
+                    .font(.amber(10, weight: .bold))
+                    .foregroundColor(Amber.bright)
+                    .amberGlow(2)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
             }
             .buttonStyle(.plain)
 
             Spacer()
 
-            // New file button
             Button(action: resetToEmpty) {
-                HStack(spacing: 5) {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 12))
-                    Text("New File")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.white.opacity(0.5))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.05))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                )
+                Text("[ NEW FILE ]")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .background(Amber.bgHeader.opacity(0.6))
     }
 
     // MARK: - Help Popover
 
     private var helpPopover: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("How File Transcription works")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("// HOW FILE TRANSCRIPTION WORKS")
+                .font(.amber(11, weight: .bold))
+                .foregroundColor(Amber.bright)
 
             VStack(alignment: .leading, spacing: 10) {
-                helpRow(
-                    icon: "cpu",
-                    title: "Local (WhisperKit)",
-                    body: "Uses the same Whisper model you selected in Settings — no internet required. Transcription runs entirely on your Mac. No speaker detection."
-                )
-                helpRow(
-                    icon: "waveform.and.mic",
-                    title: "Deepgram + Speakers",
-                    body: "Sends the file to Deepgram cloud API. Detects who said what (diarization). Requires a Deepgram API key in Settings → Cloud."
-                )
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("[LOCAL]")
+                        .font(.amber(10, weight: .bold))
+                        .foregroundColor(Amber.hot)
+                    Text("Uses the Whisper model loaded in Settings.\nNo internet. No speaker detection.")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("[DEEPGRAM]")
+                        .font(.amber(10, weight: .bold))
+                        .foregroundColor(Amber.hot)
+                    Text("Sends file to Deepgram cloud API.\nDetects speakers. Requires API key in Settings.")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
+                }
             }
 
-            Divider()
+            Rectangle().fill(Amber.borderFaint).frame(height: 1)
 
-            Text("Supported formats: mp3, mp4, wav, m4a, mov")
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.secondary)
+            Text("FORMATS: MP3  MP4  WAV  M4A  MOV")
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
         }
-        .padding(16)
-        .frame(width: 320)
-    }
-
-    private func helpRow(icon: String, title: String, body: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundColor(.accentColor)
-                .frame(width: 20)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                Text(body)
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
+        .padding(14)
+        .frame(width: 300)
+        .background(Amber.bg)
+        .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
     }
 
     // MARK: - Actions
@@ -475,30 +417,17 @@ struct FileTranscriptionView: View {
     private func openFilePanel() {
         let panel = NSOpenPanel()
         panel.title = "Select Audio or Video File"
-        panel.allowedContentTypes = [
-            UTType.mp3,
-            UTType.mpeg4Audio,
-            UTType.wav,
-            UTType.audio,
-            UTType.movie,
-            UTType.quickTimeMovie
-        ]
+        panel.allowedContentTypes = [UTType.mp3, UTType.mpeg4Audio, UTType.wav, UTType.audio, UTType.movie, UTType.quickTimeMovie]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-
         guard panel.runModal() == .OK, let url = panel.url else { return }
         startTranscription(url: url)
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first else { return false }
-
         provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-            guard
-                let data = item as? Data,
-                let url = URL(dataRepresentation: data, relativeTo: nil)
-            else { return }
-
+            guard let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
             let ext = url.pathExtension.lowercased()
             guard allowedExtensions.contains(ext) else {
                 DispatchQueue.main.async {
@@ -507,10 +436,7 @@ struct FileTranscriptionView: View {
                 }
                 return
             }
-
-            DispatchQueue.main.async {
-                startTranscription(url: url)
-            }
+            DispatchQueue.main.async { startTranscription(url: url) }
         }
         return true
     }
@@ -523,21 +449,10 @@ struct FileTranscriptionView: View {
 
         transcriptionTask = Task {
             do {
-                let transcriptionResult = try await transcriber.transcribe(
-                    fileURL: url,
-                    mode: selectedMode,
-                    language: selectedLanguage
-                )
-                await MainActor.run {
-                    result = transcriptionResult
-                    viewState = .result
-                }
+                let res = try await transcriber.transcribe(fileURL: url, mode: selectedMode, language: selectedLanguage)
+                await MainActor.run { result = res; viewState = .result }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    showError = true
-                    viewState = .empty
-                }
+                await MainActor.run { errorMessage = error.localizedDescription; showError = true; viewState = .empty }
             }
         }
     }
@@ -563,15 +478,13 @@ struct FileTranscriptionView: View {
 
     private func exportResult(_ result: FileTranscriptionResult) {
         let suggestedName = droppedFileURL?.deletingPathExtension().lastPathComponent ?? "transcription"
-        Task {
-            _ = await TranscriptionExporter.export(result, format: exportFormat, suggestedName: suggestedName)
-        }
+        Task { _ = await TranscriptionExporter.export(result, format: exportFormat, suggestedName: suggestedName) }
     }
 
     // MARK: - Helpers
 
     private func formatTimestamp(start: Float, end: Float) -> String {
-        "\(secondsToTimestamp(start)) \u{2192} \(secondsToTimestamp(end))"
+        "\(secondsToTimestamp(start))→\(secondsToTimestamp(end))"
     }
 
     private func secondsToTimestamp(_ seconds: Float) -> String {
@@ -579,15 +492,10 @@ struct FileTranscriptionView: View {
         let h = total / 3600
         let m = (total % 3600) / 60
         let s = total % 60
-        if h > 0 {
-            return String(format: "%02d:%02d:%02d", h, m, s)
-        } else {
-            return String(format: "%02d:%02d", m, s)
-        }
+        if h > 0 { return String(format: "%02d:%02d:%02d", h, m, s) }
+        return String(format: "%02d:%02d", m, s)
     }
 }
-
-// MARK: - Preview
 
 #if DEBUG
 struct FileTranscriptionView_Previews: PreviewProvider {

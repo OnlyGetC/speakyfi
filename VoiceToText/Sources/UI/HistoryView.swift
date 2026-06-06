@@ -8,55 +8,67 @@ struct HistoryView: View {
 
     var body: some View {
         ZStack {
-            VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.black.opacity(0.35))
-
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            Amber.bg
+            ScanlineOverlay()
 
             VStack(spacing: 0) {
-                // Заголовок
+                // Header
                 HStack {
-                    Text(t(.historyTitle))
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.75))
+                    Text("SPEAKYFI")
+                        .font(.amber(11, weight: .bold))
+                        .foregroundColor(Amber.bright)
+                        .amberGlow(4)
+                    Text(" // HISTORY")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.dim)
                     Spacer()
                     Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.4))
-                            .frame(width: 20, height: 20)
-                            .background(Color.white.opacity(0.06))
-                            .clipShape(Circle())
+                        Text("[X]")
+                            .font(.amber(10))
+                            .foregroundColor(Amber.dim)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 10)
+                .padding(.horizontal, 12)
+                .frame(height: 26)
+                .background(Amber.bgHeader)
 
-                Rectangle()
-                    .fill(Color.white.opacity(0.06))
-                    .frame(height: 1)
+                AmberDivider()
 
+                // Status line
+                HStack {
+                    Text("ENTRIES: \(appState.history.count)")
+                        .font(.amber(9))
+                        .foregroundColor(Amber.dim)
+                    Spacer()
+                    Text("LAST 50")
+                        .font(.amber(9))
+                        .foregroundColor(Amber.faint)
+                }
+                .padding(.horizontal, 12)
+                .frame(height: 20)
+
+                AmberDivider()
+
+                // Content
                 if appState.history.isEmpty {
                     Spacer()
-                    Text(t(.historyEmpty))
-                        .font(.system(size: 12, design: .rounded))
-                        .foregroundColor(.white.opacity(0.25))
+                    VStack(spacing: 6) {
+                        Text("C:\\> history --list")
+                            .font(.amber(10))
+                            .foregroundColor(Amber.faint)
+                        Text("NO ENTRIES FOUND")
+                            .font(.amber(10))
+                            .foregroundColor(Amber.dim)
+                        BlinkingCursor()
+                    }
                     Spacer()
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(appState.history) { entry in
-                                HistoryRow(entry: entry)
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.04))
-                                    .frame(height: 1)
-                                    .padding(.leading, 16)
+                                AmberHistoryRow(entry: entry)
+                                AmberDivider()
                             }
                         }
                     }
@@ -64,39 +76,38 @@ struct HistoryView: View {
             }
         }
         .frame(width: 340, height: 420)
-        .shadow(color: .black.opacity(0.4), radius: 24, x: 0, y: 8)
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.10), radius: 16, x: 0, y: 6)
     }
 }
 
-struct HistoryRow: View {
+struct AmberHistoryRow: View {
     let entry: TranscriptionEntry
     @State private var copied = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
+                Text(entry.timeString)
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 Text(entry.text)
-                    .font(.system(size: 12, design: .rounded))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
                     .lineLimit(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(entry.timeString)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.25))
             }
 
             Button(action: copyEntry) {
-                Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 10))
-                    .foregroundColor(copied ? .green : .white.opacity(0.25))
-                    .frame(width: 24, height: 24)
+                Text(copied ? "[OK]" : "[CPY]")
+                    .font(.amber(9))
+                    .foregroundColor(copied ? Amber.ok : Amber.dim)
             }
             .buttonStyle(.plain)
             .animation(.easeInOut(duration: 0.15), value: copied)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
 

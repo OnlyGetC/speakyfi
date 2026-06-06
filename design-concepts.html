@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speakyfi — Design Concepts</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    color: #ccc;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  /* ─── NAV ─────────────────────────────────────────────── */
+  .nav {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+  .nav button {
+    background: transparent;
+    border: 1px solid #333;
+    color: #666;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 8px 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .nav button:hover { border-color: #555; color: #999; }
+  .nav button.active { border-color: #fff; color: #fff; background: rgba(255,255,255,0.04); }
+
+  /* ─── CONCEPT SECTIONS ────────────────────────────────── */
+  .concept { display: none; }
+  .concept.active { display: block; }
+
+  .concept-title {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: #444;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .concept-desc {
+    text-align: center;
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 40px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .screens {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .screen-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     CONCEPT A — PURE TUI / ncurses
+     Вдохновение: htop, vim, ranger
+  ════════════════════════════════════════════════════════ */
+
+  .tui-window {
+    width: 360px;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #c8c8c8;
+    position: relative;
+  }
+
+  .tui-titlebar {
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tui-titlebar-left {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .tui-title {
+    color: #4a9eff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .tui-version { color: #3a3a3a; font-size: 10px; }
+  .tui-controls { color: #3a3a3a; font-size: 10px; letter-spacing: 0.02em; }
+  .tui-controls span { color: #5a5a5a; }
+
+  .tui-status-bar {
+    padding: 3px 10px;
+    background: #141414;
+    border-bottom: 1px solid #1e1e1e;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 10px;
+  }
+  .tui-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tui-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .tui-dot.ready   { background: #3a3a3a; }
+  .tui-dot.rec     { background: #ff4444; box-shadow: 0 0 6px #ff4444; }
+  .tui-dot.process { background: #ffaa00; box-shadow: 0 0 6px #ffaa00; }
+  .tui-dot.done    { background: #44ff88; box-shadow: 0 0 6px #44ff88; }
+  .tui-state-label { color: #888; font-size: 10px; }
+
+  .tui-body {
+    padding: 12px 10px;
+    min-height: 80px;
+  }
+
+  .tui-waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+    margin-bottom: 8px;
+  }
+  .tui-waveform span {
+    display: inline-block;
+    width: 3px;
+    background: #4a9eff;
+    border-radius: 1px;
+    opacity: 0.85;
+  }
+
+  .tui-text-output {
+    color: #e0e0e0;
+    font-size: 12px;
+    line-height: 1.5;
+    border-left: 2px solid #2a2a2a;
+    padding-left: 8px;
+    margin-bottom: 10px;
+  }
+  .tui-text-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: #4a9eff;
+    opacity: 0.8;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .tui-progress-line {
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .tui-progress-line .bar {
+    color: #4a9eff;
+  }
+  .tui-progress-line .track {
+    color: #1e1e1e;
+  }
+
+  .tui-hint {
+    color: #333;
+    font-size: 10px;
+    text-align: center;
+    padding: 18px 0 6px;
+  }
+  .tui-hint kbd {
+    color: #555;
+    border: 1px solid #2a2a2a;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-family: inherit;
+  }
+
+  .tui-footer {
+    border-top: 1px solid #1e1e1e;
+    padding: 4px 10px;
+    display: flex;
+    justify-content: space-between;
+    background: #0f0f0f;
+    font-size: 10px;
+    color: #2e2e2e;
+  }
+  .tui-footer span { color: #3a3a3a; }
+
+  /* Settings panel TUI */
+  .tui-settings {
+    width: 560px;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #c8c8c8;
+    display: flex;
+  }
+  .tui-sidebar {
+    width: 140px;
+    border-right: 1px solid #1e1e1e;
+    background: #0a0a0a;
+  }
+  .tui-sidebar-header {
+    padding: 6px 10px;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: #333;
+    text-transform: uppercase;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .tui-sidebar-item {
+    padding: 5px 10px;
+    font-size: 11px;
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tui-sidebar-item.active {
+    background: #1a1a2e;
+    color: #4a9eff;
+  }
+  .tui-sidebar-item.active::before { content: '›'; color: #4a9eff; }
+  .tui-sidebar-item:not(.active)::before { content: ' '; }
+
+  .tui-main-panel {
+    flex: 1;
+    padding: 12px;
+  }
+  .tui-section-title {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #4a9eff;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .tui-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+  .tui-field-label { color: #777; }
+  .tui-field-value {
+    color: #e0e0e0;
+    border: 1px solid #2a2a2a;
+    padding: 2px 8px;
+    background: #111;
+    font-family: inherit;
+    font-size: 11px;
+    min-width: 80px;
+    text-align: center;
+  }
+  .tui-field-value.accent { color: #4a9eff; border-color: #1a2a3e; background: #0a1520; }
+  .tui-radio-group { display: flex; gap: 8px; }
+  .tui-radio {
+    font-size: 10px;
+    color: #555;
+    padding: 2px 8px;
+    border: 1px solid #222;
+    cursor: pointer;
+  }
+  .tui-radio.active { color: #4a9eff; border-color: #4a9eff; background: #0a1520; }
+  .tui-divider { border: none; border-top: 1px solid #1a1a1a; margin: 10px 0; }
+
+  /* ════════════════════════════════════════════════════════
+     CONCEPT B — PHOSPHOR / CRT GREEN
+     Вдохновение: старые терминалы DEC VT100, Apple ][
+  ════════════════════════════════════════════════════════ */
+
+  .phosphor-window {
+    width: 360px;
+    background: #050e05;
+    border: 1px solid #0d2a0d;
+    font-family: 'VT323', 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: #33ff33;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0, 180, 0, 0.08), inset 0 0 60px rgba(0,0,0,0.4);
+  }
+  /* CRT scanlines */
+  .phosphor-window::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.12) 2px,
+      rgba(0,0,0,0.12) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .phosphor-header {
+    border-bottom: 1px solid #0d2a0d;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .phosphor-logo {
+    font-size: 16px;
+    color: #44ff44;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 8px #33ff33;
+  }
+  .phosphor-logo span { color: #1a8a1a; }
+  .phosphor-status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #33ff33;
+    box-shadow: 0 0 8px #33ff33;
+  }
+  .phosphor-status-dot.dim { background: #0a3a0a; box-shadow: none; }
+  .phosphor-status-dot.warn { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
+
+  .phosphor-body {
+    padding: 14px 12px;
+    min-height: 90px;
+    position: relative;
+    z-index: 1;
+  }
+  .phosphor-line {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #33ff33;
+  }
+  .phosphor-line .prompt { color: #1a6a1a; }
+  .phosphor-line .dim { color: #0d4a0d; }
+  .phosphor-line .bright { color: #66ff66; text-shadow: 0 0 6px #33ff33; }
+  .phosphor-line .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #33ff33;
+    box-shadow: 0 0 6px #33ff33;
+    vertical-align: text-bottom;
+    animation: blink 0.8s step-end infinite;
+  }
+
+  .phosphor-waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+    margin: 8px 0;
+  }
+  .phosphor-waveform span {
+    display: inline-block;
+    width: 4px;
+    background: #33ff33;
+    box-shadow: 0 0 4px #33ff33;
+    opacity: 0.9;
+  }
+
+  .phosphor-bar-track {
+    font-size: 14px;
+    color: #0d3a0d;
+    letter-spacing: 0;
+  }
+  .phosphor-bar-fill { color: #33ff33; text-shadow: 0 0 4px #33ff33; }
+
+  .phosphor-footer {
+    border-top: 1px solid #0d2a0d;
+    padding: 5px 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #0d3a0d;
+    position: relative;
+    z-index: 1;
+  }
+  .phosphor-footer span { color: #1a5a1a; }
+
+  /* Phosphor settings */
+  .phosphor-settings {
+    width: 560px;
+    background: #050e05;
+    border: 1px solid #0d2a0d;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #33ff33;
+    box-shadow: 0 0 40px rgba(0, 180, 0, 0.06);
+    position: relative;
+  }
+  .phosphor-settings::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.10) 2px, rgba(0,0,0,0.10) 4px);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .phosphor-settings-header {
+    border-bottom: 1px solid #0d2a0d;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #1a6a1a;
+    position: relative;
+    z-index: 1;
+  }
+  .phosphor-settings-header span { color: #66ff66; text-shadow: 0 0 6px #33ff33; }
+  .phosphor-settings-body {
+    padding: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .phosphor-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .phosphor-field-label { color: #1a6a1a; }
+  .phosphor-field-val { color: #66ff66; text-shadow: 0 0 4px #33ff33; }
+  .phosphor-field-val.input {
+    border: 1px solid #1a5a1a;
+    padding: 1px 8px;
+    background: #020902;
+    min-width: 100px;
+    text-align: center;
+  }
+  .phosphor-tabs {
+    display: flex;
+    border-bottom: 1px solid #0d2a0d;
+    position: relative;
+    z-index: 1;
+  }
+  .phosphor-tab {
+    padding: 5px 14px;
+    font-size: 13px;
+    color: #0d4a0d;
+    cursor: pointer;
+    border-right: 1px solid #0d2a0d;
+  }
+  .phosphor-tab.active { color: #44ff44; background: #010e01; text-shadow: 0 0 6px #33ff33; }
+  .phosphor-section-hdr {
+    font-size: 12px;
+    color: #1a6a1a;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #0d2a0d;
+    padding-bottom: 3px;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     CONCEPT C — AMBER / BRUTALIST
+     Вдохновение: старые IBM, рабочие станции 80-х
+     + современный brutalist web
+  ════════════════════════════════════════════════════════ */
+
+  .amber-window {
+    width: 360px;
+    background: #0a0800;
+    border: 2px solid #3a2800;
+    font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #cc8800;
+    position: relative;
+  }
+  .amber-window::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 6px
+    );
+    pointer-events: none;
+  }
+
+  .amber-header {
+    background: #3a2800;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .amber-logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffaa00;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,170,0,0.4);
+  }
+  .amber-header-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 10px;
+    color: #7a5000;
+  }
+  .amber-header-right span { color: #cc8800; }
+
+  .amber-status {
+    padding: 4px 12px;
+    border-bottom: 1px solid #1e1400;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 10px;
+    color: #4a3000;
+  }
+  .amber-status-item { display: flex; gap: 5px; align-items: center; }
+  .amber-status-item .k { color: #4a3000; }
+  .amber-status-item .v { color: #cc8800; }
+  .amber-status-item .v.hot { color: #ffaa00; text-shadow: 0 0 6px rgba(255,170,0,0.5); }
+
+  .amber-body {
+    padding: 12px;
+    min-height: 90px;
+    position: relative;
+    z-index: 1;
+  }
+  .amber-line {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #cc8800;
+  }
+  .amber-line .prompt { color: #4a3000; }
+  .amber-line .bright { color: #ffaa00; text-shadow: 0 0 8px rgba(255,170,0,0.5); }
+  .amber-line .dim { color: #2a1e00; }
+  .amber-line .cursor {
+    display: inline-block;
+    width: 7px; height: 12px;
+    background: #cc8800;
+    box-shadow: 0 0 6px rgba(204,136,0,0.6);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  .amber-waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    margin: 6px 0;
+  }
+  .amber-waveform span {
+    display: inline-block;
+    width: 4px;
+    background: #ffaa00;
+    box-shadow: 0 0 3px rgba(255,170,0,0.4);
+  }
+
+  .amber-progress {
+    font-size: 11px;
+    color: #4a3000;
+    margin-top: 8px;
+  }
+  .amber-progress .fill { color: #cc8800; }
+  .amber-progress .pct  { color: #ff8800; }
+
+  .amber-footer {
+    border-top: 1px solid #1e1400;
+    background: #050400;
+    padding: 4px 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #2a1e00;
+    position: relative;
+    z-index: 1;
+  }
+  .amber-footer span { color: #4a3000; }
+
+  /* Amber settings */
+  .amber-settings {
+    width: 560px;
+    background: #0a0800;
+    border: 2px solid #3a2800;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #cc8800;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .amber-settings::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 6px);
+    pointer-events: none;
+  }
+  .amber-settings-header {
+    background: #3a2800;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .amber-settings-title {
+    font-size: 13px;
+    color: #ffaa00;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(255,170,0,0.3);
+  }
+  .amber-settings-body { display: flex; position: relative; z-index: 1; }
+  .amber-nav {
+    width: 130px;
+    border-right: 1px solid #1e1400;
+    font-size: 11px;
+  }
+  .amber-nav-item {
+    padding: 6px 12px;
+    color: #4a3000;
+    border-bottom: 1px solid #0f0c00;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .amber-nav-item.active {
+    color: #ffaa00;
+    background: #150f00;
+    border-left: 2px solid #ffaa00;
+    padding-left: 10px;
+  }
+  .amber-nav-item:not(.active) { padding-left: 12px; }
+
+  .amber-panel {
+    flex: 1;
+    padding: 12px;
+  }
+  .amber-panel-title {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #ff8800;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #1e1400;
+    text-shadow: 0 0 6px rgba(255,136,0,0.3);
+  }
+  .amber-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 9px;
+    font-size: 11px;
+  }
+  .amber-row .label { color: #7a5000; }
+  .amber-row .value {
+    color: #cc8800;
+    border: 1px solid #2a1e00;
+    padding: 2px 8px;
+    background: #050400;
+    min-width: 90px;
+    text-align: center;
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .amber-row .value.active { color: #ffaa00; border-color: #ffaa00; background: #0f0c00; }
+
+  /* ─── CAPTION ──────────────────────────────────────────── */
+  .caption {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #2a2a2a;
+    margin-top: 40px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── NAVIGATION ─────────────────────────────────────── -->
+<div class="nav">
+  <button class="active" onclick="show('a')">A — TUI / ncurses</button>
+  <button onclick="show('b')">B — Phosphor CRT green</button>
+  <button onclick="show('c')">C — Amber IBM</button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     CONCEPT A — PURE TUI
+════════════════════════════════════════════════════════ -->
+<div class="concept active" id="concept-a">
+  <div class="concept-title">Concept A</div>
+  <div class="concept-desc">TUI / ncurses · Вдохновение: htop, vim, ranger · Белый на чёрном, синие акценты</div>
+
+  <div class="screens">
+
+    <!-- Overlay: IDLE -->
+    <div>
+      <div class="screen-label">Overlay · Idle</div>
+      <div class="tui-window">
+        <div class="tui-titlebar">
+          <div class="tui-titlebar-left">
+            <span class="tui-title">SPEAKYFI</span>
+            <span class="tui-version">v1.6</span>
+          </div>
+          <span class="tui-controls"><span>⌘,</span> settings &nbsp; <span>^H</span> history &nbsp; <span>^W</span> close</span>
+        </div>
+        <div class="tui-status-bar">
+          <div class="tui-indicator">
+            <div class="tui-dot ready"></div>
+            <span class="tui-state-label">READY</span>
+          </div>
+          <span style="color:#2a2a2a">│</span>
+          <span style="color:#3a3a3a; font-size:10px;">model: whisper-small</span>
+        </div>
+        <div class="tui-body">
+          <div class="tui-hint">
+            Hold <kbd>⌃</kbd> to record &nbsp;·&nbsp; <kbd>⌘F</kbd> file transcription
+          </div>
+        </div>
+        <div class="tui-footer">
+          <span>[R]ec [H]istory [F]ile [,]settings [Q]uit</span>
+          <span>LOCAL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: RECORDING -->
+    <div>
+      <div class="screen-label">Overlay · Recording</div>
+      <div class="tui-window">
+        <div class="tui-titlebar">
+          <div class="tui-titlebar-left">
+            <span class="tui-title">SPEAKYFI</span>
+            <span class="tui-version">v1.6</span>
+          </div>
+          <span class="tui-controls"><span>⌃</span> release to stop</span>
+        </div>
+        <div class="tui-status-bar">
+          <div class="tui-indicator">
+            <div class="tui-dot rec"></div>
+            <span class="tui-state-label" style="color:#ff4444;">REC</span>
+          </div>
+          <span style="color:#2a2a2a">│</span>
+          <span style="color:#3a3a3a; font-size:10px;">0:04</span>
+        </div>
+        <div class="tui-body">
+          <div class="tui-waveform">
+            <span style="height:6px"></span><span style="height:14px"></span><span style="height:22px"></span><span style="height:28px"></span><span style="height:18px"></span><span style="height:8px"></span><span style="height:20px"></span><span style="height:26px"></span><span style="height:12px"></span><span style="height:24px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:20px"></span><span style="height:30px"></span><span style="height:10px"></span><span style="height:22px"></span><span style="height:16px"></span><span style="height:4px"></span><span style="height:18px"></span><span style="height:26px"></span>
+          </div>
+          <div class="tui-progress-line">
+            audio <span class="bar">████████████</span><span class="track">────────</span> <span style="color:#4a9eff">62%</span> &nbsp; 16kHz mono
+          </div>
+        </div>
+        <div class="tui-footer">
+          <span>recording... release <span>[⌃]</span> to stop</span>
+          <span style="color:#ff4444">● REC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: RESULT -->
+    <div>
+      <div class="screen-label">Overlay · Result</div>
+      <div class="tui-window">
+        <div class="tui-titlebar">
+          <div class="tui-titlebar-left">
+            <span class="tui-title">SPEAKYFI</span>
+          </div>
+          <span class="tui-controls"><span>⌘C</span> copy &nbsp; <span>⎋</span> dismiss</span>
+        </div>
+        <div class="tui-status-bar">
+          <div class="tui-indicator">
+            <div class="tui-dot done"></div>
+            <span class="tui-state-label" style="color:#44ff88;">DONE · inserted</span>
+          </div>
+        </div>
+        <div class="tui-body">
+          <div class="tui-text-output">
+            Make a meeting tomorrow at 3pm with the design team and send a calendar invite<span class="tui-text-cursor"></span>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <div style="font-size:10px; color:#3a3a3a; border:1px solid #2a2a2a; padding:2px 10px; cursor:pointer;">[ copy ]</div>
+            <div style="font-size:10px; color:#3a3a3a; padding:2px 0;">· text inserted into active app</div>
+          </div>
+        </div>
+        <div class="tui-footer">
+          <span><span>[C]</span>opy &nbsp; <span>[R]</span>ec again &nbsp; <span>[⎋]</span> dismiss</span>
+          <span>✓ ok</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div>
+      <div class="screen-label">Settings</div>
+      <div class="tui-settings">
+        <div class="tui-sidebar">
+          <div class="tui-sidebar-header">Settings</div>
+          <div class="tui-sidebar-item active">hotkeys</div>
+          <div class="tui-sidebar-item">model</div>
+          <div class="tui-sidebar-item">language</div>
+          <div class="tui-sidebar-item">prompt</div>
+          <div class="tui-sidebar-item">correction</div>
+          <div class="tui-sidebar-item">interface</div>
+        </div>
+        <div class="tui-main-panel">
+          <div class="tui-section-title">// hotkeys</div>
+          <div class="tui-field">
+            <span class="tui-field-label">push-to-talk</span>
+            <span class="tui-field-value accent">⌃ Control</span>
+          </div>
+          <div class="tui-field">
+            <span class="tui-field-label">toggle VAD</span>
+            <span class="tui-field-value">⌘ ⌃ V</span>
+          </div>
+          <hr class="tui-divider">
+          <div class="tui-section-title">// mode</div>
+          <div class="tui-field">
+            <span class="tui-field-label">engine</span>
+            <div class="tui-radio-group">
+              <div class="tui-radio active">local</div>
+              <div class="tui-radio">cloud</div>
+            </div>
+          </div>
+          <div class="tui-field">
+            <span class="tui-field-label">model</span>
+            <span class="tui-field-value accent">whisper-small</span>
+          </div>
+          <div class="tui-field">
+            <span class="tui-field-label">status</span>
+            <span class="tui-field-value" style="color:#44ff88; border-color:#1a3a1a; background:#051505;">● ready</span>
+          </div>
+          <hr class="tui-divider">
+          <div style="font-size:10px; color:#2a2a2a; margin-top:4px;">[Tab] switch section &nbsp; [⎋] close &nbsp; [↑↓] navigate</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     CONCEPT B — PHOSPHOR CRT
+════════════════════════════════════════════════════════ -->
+<div class="concept" id="concept-b">
+  <div class="concept-title">Concept B</div>
+  <div class="concept-desc">Phosphor CRT · Вдохновение: DEC VT100, Apple ][ · Зелёный на чёрном, scanlines, glow</div>
+
+  <div class="screens">
+
+    <!-- Overlay: Idle -->
+    <div>
+      <div class="screen-label">Overlay · Idle</div>
+      <div class="phosphor-window">
+        <div class="phosphor-header" style="position:relative;z-index:1;">
+          <div class="phosphor-logo">SPK<span>Y</span>FI</div>
+          <div class="phosphor-status-dot dim"></div>
+        </div>
+        <div class="phosphor-body">
+          <div class="phosphor-line"><span class="prompt">$</span> speakyfi --status</div>
+          <div class="phosphor-line"><span class="dim">model&nbsp;&nbsp;&nbsp;:</span> <span>whisper-small [loaded]</span></div>
+          <div class="phosphor-line"><span class="dim">engine&nbsp;:</span> <span>whisperkit/arm64</span></div>
+          <div class="phosphor-line"><span class="dim">mode&nbsp;&nbsp;&nbsp;:</span> <span>PTT · hold ⌃ to record</span></div>
+          <div class="phosphor-line" style="margin-top:8px;"><span class="dim">waiting for input</span> <span class="cursor"></span></div>
+        </div>
+        <div class="phosphor-footer">
+          <span>⌃<span>rec</span> &nbsp;⌘,<span>cfg</span> &nbsp;⌘H<span>hist</span></span>
+          <span>LOCAL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Recording -->
+    <div>
+      <div class="screen-label">Overlay · Recording</div>
+      <div class="phosphor-window">
+        <div class="phosphor-header" style="position:relative;z-index:1;">
+          <div class="phosphor-logo">SPK<span>Y</span>FI</div>
+          <div class="phosphor-status-dot warn"></div>
+        </div>
+        <div class="phosphor-body">
+          <div class="phosphor-line"><span class="prompt">$</span> speakyfi --record</div>
+          <div class="phosphor-line"><span class="bright">● REC</span> <span class="dim">0:07 · release ⌃ to stop</span></div>
+          <div class="phosphor-waveform">
+            <span style="height:5px"></span><span style="height:12px"></span><span style="height:20px"></span><span style="height:26px"></span><span style="height:16px"></span><span style="height:8px"></span><span style="height:22px"></span><span style="height:28px"></span><span style="height:10px"></span><span style="height:24px"></span><span style="height:18px"></span><span style="height:6px"></span><span style="height:20px"></span><span style="height:28px"></span><span style="height:8px"></span><span style="height:22px"></span><span style="height:14px"></span><span style="height:4px"></span><span style="height:18px"></span><span style="height:26px"></span>
+          </div>
+          <div class="phosphor-bar-track">
+            [<span class="phosphor-bar-fill">████████████████</span>────────] <span class="phosphor-bar-fill">68%</span>
+          </div>
+        </div>
+        <div class="phosphor-footer">
+          <span>recording... release <span>⌃</span> to stop</span>
+          <span style="color:#ffaa00;">⚠ REC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Result -->
+    <div>
+      <div class="screen-label">Overlay · Result</div>
+      <div class="phosphor-window">
+        <div class="phosphor-header" style="position:relative;z-index:1;">
+          <div class="phosphor-logo">SPK<span>Y</span>FI</div>
+          <div class="phosphor-status-dot"></div>
+        </div>
+        <div class="phosphor-body">
+          <div class="phosphor-line"><span class="prompt">$</span> speakyfi --last</div>
+          <div class="phosphor-line"><span class="dim">output ───────────────────────</span></div>
+          <div class="phosphor-line" style="margin:6px 0; padding-left:8px;">
+            Make a meeting tomorrow at 3pm<br>with the design team<span class="cursor"></span>
+          </div>
+          <div class="phosphor-line"><span class="dim">──────────────────────────────</span></div>
+          <div class="phosphor-line"><span class="bright">✓</span> <span class="dim">inserted · </span><span>⌘C copy</span></div>
+        </div>
+        <div class="phosphor-footer">
+          <span>⌘C<span>copy</span> &nbsp;⌃<span>rec again</span></span>
+          <span style="color:#44ff44;">✓ OK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div>
+      <div class="screen-label">Settings</div>
+      <div class="phosphor-settings">
+        <div class="phosphor-settings-header">
+          $ speakyfi --config &nbsp;<span>[ settings ]</span>
+        </div>
+        <div class="phosphor-tabs" style="position:relative;z-index:1;">
+          <div class="phosphor-tab active">hotkeys</div>
+          <div class="phosphor-tab">model</div>
+          <div class="phosphor-tab">language</div>
+          <div class="phosphor-tab">correction</div>
+          <div class="phosphor-tab">interface</div>
+        </div>
+        <div class="phosphor-settings-body">
+          <div class="phosphor-section-hdr">// hotkeys ──────────────────────</div>
+          <div class="phosphor-field">
+            <span class="phosphor-field-label">push-to-talk &nbsp;&nbsp;&nbsp;:</span>
+            <span class="phosphor-field-val input">⌃ Control</span>
+          </div>
+          <div class="phosphor-field">
+            <span class="phosphor-field-label">toggle vad &nbsp;&nbsp;&nbsp;&nbsp;:</span>
+            <span class="phosphor-field-val input">⌘ ⌃ V</span>
+          </div>
+          <div class="phosphor-section-hdr" style="margin-top:14px;">// model ─────────────────────────</div>
+          <div class="phosphor-field">
+            <span class="phosphor-field-label">engine &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
+            <span class="phosphor-field-val">[local] cloud</span>
+          </div>
+          <div class="phosphor-field">
+            <span class="phosphor-field-label">whisper model &nbsp;:</span>
+            <span class="phosphor-field-val">small ▾</span>
+          </div>
+          <div class="phosphor-field">
+            <span class="phosphor-field-label">status &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
+            <span class="phosphor-field-val" style="text-shadow: 0 0 6px #33ff33;">● loaded</span>
+          </div>
+          <div style="margin-top:14px; font-size:12px; color:#0d4a0d;">[Tab] switch &nbsp;·&nbsp; [↑↓] navigate &nbsp;·&nbsp; [Enter] edit &nbsp;·&nbsp; [Esc] close</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     CONCEPT C — AMBER IBM
+════════════════════════════════════════════════════════ -->
+<div class="concept" id="concept-c">
+  <div class="concept-title">Concept C</div>
+  <div class="concept-desc">Amber IBM · Вдохновение: IBM 3270, PC-DOS, рабочие станции 80-х · Янтарный glow, scanlines</div>
+
+  <div class="screens">
+
+    <!-- Overlay: Idle -->
+    <div>
+      <div class="screen-label">Overlay · Idle</div>
+      <div class="amber-window">
+        <div class="amber-header">
+          <span class="amber-logo">Speakyfi</span>
+          <div class="amber-header-right">
+            <span>v1.6</span>
+            <span style="color:#2a1e00;">│</span>
+            <span>LOCAL</span>
+          </div>
+        </div>
+        <div class="amber-status">
+          <div class="amber-status-item"><span class="k">MODEL</span><span class="v">SMALL</span></div>
+          <div class="amber-status-item"><span class="k">│</span></div>
+          <div class="amber-status-item"><span class="k">STATUS</span><span class="v">READY</span></div>
+          <div class="amber-status-item"><span class="k">│</span></div>
+          <div class="amber-status-item"><span class="k">LANG</span><span class="v">AUTO</span></div>
+        </div>
+        <div class="amber-body">
+          <div class="amber-line"><span class="prompt">C:\&gt;</span> speakyfi.exe</div>
+          <div class="amber-line"><span class="dim">hold [CTRL] to start recording</span></div>
+          <div class="amber-line" style="margin-top:6px;"><span class="cursor"></span></div>
+        </div>
+        <div class="amber-footer">
+          <span><span>[CTRL]</span>REC &nbsp;<span>[F1]</span>HELP &nbsp;<span>[F2]</span>HIST &nbsp;<span>[F10]</span>CFG</span>
+          <span>READY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Recording -->
+    <div>
+      <div class="screen-label">Overlay · Recording</div>
+      <div class="amber-window">
+        <div class="amber-header">
+          <span class="amber-logo">Speakyfi</span>
+          <div class="amber-header-right">
+            <span style="color:#ff8800; text-shadow:0 0 8px rgba(255,136,0,0.6);">● REC 0:09</span>
+          </div>
+        </div>
+        <div class="amber-status">
+          <div class="amber-status-item"><span class="k">INPUT</span><span class="v hot">ACTIVE</span></div>
+          <div class="amber-status-item"><span class="k">│</span></div>
+          <div class="amber-status-item"><span class="k">LEVEL</span><span class="v hot">████ 68%</span></div>
+        </div>
+        <div class="amber-body">
+          <div class="amber-line"><span class="prompt">C:\&gt;</span> recording... release [CTRL]</div>
+          <div class="amber-waveform">
+            <span style="height:5px"></span><span style="height:14px"></span><span style="height:22px"></span><span style="height:26px"></span><span style="height:16px"></span><span style="height:8px"></span><span style="height:20px"></span><span style="height:28px"></span><span style="height:10px"></span><span style="height:24px"></span><span style="height:18px"></span><span style="height:5px"></span><span style="height:20px"></span><span style="height:26px"></span><span style="height:8px"></span><span style="height:22px"></span><span style="height:14px"></span><span style="height:4px"></span><span style="height:18px"></span><span style="height:26px"></span>
+          </div>
+          <div class="amber-progress">
+            AUDIO [<span class="fill">████████████████</span>────────] <span class="pct">66%</span>
+          </div>
+        </div>
+        <div class="amber-footer">
+          <span>release <span>[CTRL]</span> to stop</span>
+          <span style="color:#ff8800;">● REC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Result -->
+    <div>
+      <div class="screen-label">Overlay · Result</div>
+      <div class="amber-window">
+        <div class="amber-header">
+          <span class="amber-logo">Speakyfi</span>
+          <div class="amber-header-right">
+            <span style="color:#ffaa00;">DONE</span>
+          </div>
+        </div>
+        <div class="amber-status">
+          <div class="amber-status-item"><span class="k">STATUS</span><span class="v hot">INSERTED</span></div>
+          <div class="amber-status-item"><span class="k">│</span></div>
+          <div class="amber-status-item"><span class="k">LEN</span><span class="v">62 CHARS</span></div>
+        </div>
+        <div class="amber-body">
+          <div class="amber-line"><span class="prompt">C:\&gt;</span> last output:</div>
+          <div class="amber-line" style="padding-left:16px; margin:6px 0; border-left:2px solid #3a2800;">
+            Make a meeting tomorrow at<br>3pm with the design team<span class="cursor"></span>
+          </div>
+          <div class="amber-line"><span class="bright">[OK]</span> <span class="dim">text inserted into active window</span></div>
+        </div>
+        <div class="amber-footer">
+          <span><span>[C]</span>OPY &nbsp;<span>[R]</span>EC AGAIN &nbsp;<span>[ESC]</span>DISMISS</span>
+          <span style="color:#ffaa00;">OK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div>
+      <div class="screen-label">Settings</div>
+      <div class="amber-settings">
+        <div class="amber-settings-header">
+          <span class="amber-settings-title">SPEAKYFI CONFIG</span>
+          <span style="font-size:10px; color:#4a3000;">[F10] close</span>
+        </div>
+        <div class="amber-settings-body">
+          <div class="amber-nav">
+            <div class="amber-nav-item active">HOTKEYS</div>
+            <div class="amber-nav-item">MODEL</div>
+            <div class="amber-nav-item">LANGUAGE</div>
+            <div class="amber-nav-item">PROMPT</div>
+            <div class="amber-nav-item">CORRECTION</div>
+            <div class="amber-nav-item">INTERFACE</div>
+          </div>
+          <div class="amber-panel">
+            <div class="amber-panel-title">hotkey settings</div>
+            <div class="amber-row">
+              <span class="label">PUSH-TO-TALK</span>
+              <span class="value active">⌃ CTRL</span>
+            </div>
+            <div class="amber-row">
+              <span class="label">TOGGLE VAD</span>
+              <span class="value">⌘ ⌃ V</span>
+            </div>
+            <div style="height:1px; background:#1e1400; margin:8px 0;"></div>
+            <div class="amber-panel-title">engine</div>
+            <div class="amber-row">
+              <span class="label">MODE</span>
+              <div style="display:flex; gap:6px;">
+                <span class="value active" style="min-width:50px; text-align:center;">LOCAL</span>
+                <span class="value" style="min-width:50px; text-align:center;">CLOUD</span>
+              </div>
+            </div>
+            <div class="amber-row">
+              <span class="label">WHISPER MODEL</span>
+              <span class="value">SMALL ▾</span>
+            </div>
+            <div style="margin-top:12px; font-size:10px; color:#2a1e00;">
+              [TAB] SWITCH SECTION &nbsp;·&nbsp; [↑↓] NAVIGATE &nbsp;·&nbsp; [ENTER] EDIT
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="caption">Speakyfi design concepts · open in browser to preview</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.concept').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('concept-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

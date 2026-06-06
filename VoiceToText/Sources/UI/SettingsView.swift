@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Разделы настроек
+// MARK: - Settings sections
 
 enum SettingsSection: String, CaseIterable, Identifiable {
     case hotkeys    = "hotkeys"
@@ -21,6 +21,17 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .prompt:     return t(.sectionPrompt)
         case .correction: return t(.sectionCorrection)
         case .interface_: return t(.sectionInterface)
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .hotkeys:    return "[HOTKEYS]"
+        case .model:      return "[MODEL]"
+        case .language:   return "[LANG]"
+        case .prompt:     return "[PROMPT]"
+        case .correction: return "[CORRECT]"
+        case .interface_: return "[UI]"
         }
     }
 
@@ -60,30 +71,32 @@ struct HotkeyRecorderButton: View {
     var body: some View {
         HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 13, design: .rounded))
-                .foregroundColor(.white.opacity(0.7))
+                .font(.amber(11))
+                .foregroundColor(Amber.dim)
                 .frame(minWidth: 130, alignment: .leading)
             Spacer()
             Button(action: toggleRecording) {
                 Text(isRecording ? t(.hotkeyPressKey) : binding.displayString)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(isRecording ? .orange : .white)
+                    .font(.amber(11))
+                    .foregroundColor(isRecording ? Amber.hot : Amber.primary)
                     .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(isRecording ? Color.orange.opacity(0.15) : Color.white.opacity(0.08))
-                            .overlay(RoundedRectangle(cornerRadius: 8)
-                                .stroke(isRecording ? Color.orange.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1))
+                        Rectangle()
+                            .fill(isRecording ? Amber.hot.opacity(0.08) : Amber.faint)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .stroke(isRecording ? Amber.hot : Amber.border, lineWidth: 1)
                     )
             }
             .buttonStyle(.plain)
             .animation(.easeInOut(duration: 0.15), value: isRecording)
             Button(action: resetToDefault) {
-                Image(systemName: "arrow.counterclockwise")
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(binding == defaultBinding ? 0.15 : 0.4))
+                Text("[RST]")
+                    .font(.amber(9))
+                    .foregroundColor(binding == defaultBinding ? Amber.faint : Amber.dim)
             }
             .buttonStyle(.plain)
             .disabled(binding == defaultBinding)
@@ -138,127 +151,153 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.black.opacity(0.88))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1))
+            // Background
+            Amber.bg
 
-            HStack(spacing: 0) {
-                // Боковая навигация
-                sidebarView
-                    .frame(width: 150)
+            // Scanlines
+            ScanlineOverlay()
 
-                Divider()
-                    .background(Color.white.opacity(0.08))
+            VStack(spacing: 0) {
+                // Header stripe
+                headerBar
+                    .background(Amber.bgHeader)
+                AmberDivider()
 
-                // Контент раздела
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        sectionContent(selectedSection)
-                            .padding(24)
+                HStack(spacing: 0) {
+                    // Sidebar
+                    sidebarView
+                        .frame(width: 150)
+
+                    Rectangle()
+                        .fill(Amber.border)
+                        .frame(width: 1)
+
+                    // Section content
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            sectionContent(selectedSection)
+                                .padding(20)
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(width: 700, height: 520)
-        .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 10)
+        .amberBorder()
+        .shadow(color: Amber.primary.opacity(0.12), radius: 20, x: 0, y: 6)
+    }
+
+    // MARK: - Header bar
+
+    private var headerBar: some View {
+        HStack(spacing: 0) {
+            Text("SPEAKYFI")
+                .font(.amber(11, weight: .bold))
+                .foregroundColor(Amber.bright)
+                .amberGlow(5)
+                .padding(.leading, 10)
+
+            Text(" [CONFIG]")
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
+
+            Spacer()
+
+            Button(action: onClose) {
+                Text("[X]")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(height: 28)
     }
 
     // MARK: - Sidebar
 
     private var sidebarView: some View {
         VStack(spacing: 0) {
-            // Заголовок
+            // Sidebar title
             HStack {
-                Text(t(.settingsTitle))
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.7))
+                Text("// MENU")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.4))
-                        .frame(width: 20, height: 20)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 18)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
 
-            Divider().background(Color.white.opacity(0.08))
+            AmberDivider()
 
-            // Пункты меню
-            VStack(spacing: 2) {
+            // Menu items
+            VStack(spacing: 0) {
                 ForEach(SettingsSection.allCases) { section in
                     sidebarItem(section)
+                    Rectangle()
+                        .fill(Amber.borderFaint)
+                        .frame(height: 1)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.top, 8)
 
             Spacer()
 
-            // Кнопка доната
+            AmberDivider()
+
+            // Donate button
             Button(action: onDonate) {
-                HStack(spacing: 6) {
-                    Text("🪙")
-                        .font(.system(size: 12))
-                    Text(t(.settingsSupportButton))
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.4))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.04))
-                .cornerRadius(8)
+                Text("[SUPPORT]")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.horizontal, 8)
-            .padding(.bottom, 14)
         }
     }
 
     private func sidebarItem(_ section: SettingsSection) -> some View {
         let isSelected = selectedSection == section
         return Button(action: { selectedSection = section }) {
-            HStack(spacing: 8) {
-                Image(systemName: section.icon)
-                    .font(.system(size: 12))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.4))
-                    .frame(width: 16)
-                Text(section.label)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular, design: .rounded))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.5))
+            HStack(spacing: 0) {
+                // Left accent border for active item
+                Rectangle()
+                    .fill(isSelected ? Amber.hot : Color.clear)
+                    .frame(width: 2)
+
+                Text(section.shortLabel)
+                    .font(.amber(10, weight: isSelected ? .bold : .regular))
+                    .foregroundColor(isSelected ? Amber.bright : Amber.dim)
+                    .padding(.leading, 8)
+                    .padding(.vertical, 9)
+
                 Spacer()
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.white.opacity(0.1) : Color.clear)
-            )
+            .background(isSelected ? Amber.bg : Color.clear)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Заголовок раздела с ⓘ
+    // MARK: - Section title
 
     private func sectionTitle(_ title: String, info: String) -> some View {
-        HStack(spacing: 6) {
-            Text(title)
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(0.85))
-            InfoButton(text: info)
+        HStack(spacing: 8) {
+            Text("// \(title.uppercased()) \(String(repeating: "─", count: max(0, 28 - title.count)))")
+                .font(.amber(10, weight: .bold))
+                .foregroundColor(Amber.primary)
+                .amberGlow(2)
+            AmberInfoButton(text: info)
             Spacer()
         }
-        .padding(.bottom, 16)
+        .padding(.bottom, 12)
     }
 
-    // MARK: - Контент разделов
+    // MARK: - Section content router
 
     @ViewBuilder
     private func sectionContent(_ section: SettingsSection) -> some View {
@@ -272,22 +311,22 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: Хоткеи
+    // MARK: Hotkeys
 
     private var hotkeysSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle(t(.sectionHotkeys), info: SettingsSection.hotkeys.info)
             HotkeyRecorderButton(label: t(.hotkeyPTT), isForPTT: true,  binding: $hotkeys.pttBinding)
-            Divider().background(Color.white.opacity(0.06))
+            AmberDivider()
             HotkeyRecorderButton(label: t(.hotkeyVAD), isForPTT: false, binding: $hotkeys.vadBinding)
             Text(t(.hotkeyHint))
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.white.opacity(0.25))
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
                 .padding(.top, 4)
         }
     }
 
-    // MARK: Модель
+    // MARK: Model
 
     @ObservedObject private var modelManager = ModelManager.shared
     @State private var downloadingModel: LocalWhisperModel? = nil
@@ -300,14 +339,18 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle(t(.sectionModel), info: SettingsSection.model.info)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
                 providerTab(label: t(.modelLocal), isSelected: appState.transcriptionProvider == .local) {
                     appState.transcriptionProvider = .local
                 }
+                Rectangle()
+                    .fill(Amber.border)
+                    .frame(width: 1, height: 26)
                 providerTab(label: t(.modelCloud), isSelected: appState.transcriptionProvider == .cloud) {
                     appState.transcriptionProvider = .cloud
                 }
             }
+            .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
 
             if appState.transcriptionProvider == .local {
                 localModelSection
@@ -322,24 +365,25 @@ struct SettingsView: View {
     }
 
     private var localModelSection: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 1) {
             ForEach(LocalWhisperModel.allCases) { model in
                 localModelRow(model)
+                Rectangle().fill(Amber.borderFaint).frame(height: 1)
             }
             if downloadingModel != nil {
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     HStack {
                         Text(downloadLabel)
-                            .font(.system(size: 11, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
+                            .font(.amber(10))
+                            .foregroundColor(Amber.dim)
                         Spacer()
                         Text("\(Int(downloadProgress * 100))%")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.4))
+                            .font(.amber(10, weight: .bold))
+                            .foregroundColor(Amber.hot)
                     }
-                    ProgressView(value: downloadProgress).tint(.blue)
+                    asciiProgressBar(progress: downloadProgress)
                 }
-                .padding(.top, 4)
+                .padding(.top, 6)
             }
         }
     }
@@ -351,57 +395,81 @@ struct SettingsView: View {
         let isDownloading = downloadingModel == model
 
         return HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(isSelected ? Color.blue : Color.white.opacity(0.06)).frame(width: 18, height: 18)
-                if isSelected { Circle().fill(.white).frame(width: 7, height: 7) }
-            }
-            .onTapGesture { if isDownloaded && !isDownloading { appState.switchLocalModel(to: model) } }
+            // Selection indicator
+            Text(isSelected ? "[*]" : "[ ]")
+                .font(.amber(10))
+                .foregroundColor(isSelected ? Amber.hot : Amber.faint)
+                .onTapGesture { if isDownloaded && !isDownloading { appState.switchLocalModel(to: model) } }
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(model.displayName)
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundColor(isDownloaded ? .white.opacity(0.85) : .white.opacity(0.35))
+                    Text(model.displayName.uppercased())
+                        .font(.amber(11))
+                        .foregroundColor(isDownloaded ? Amber.primary : Amber.faint)
                     if appState.isModelSwitching && isSelected {
-                        Text(t(.modelLoading))
-                            .font(.system(size: 10, design: .rounded))
-                            .foregroundColor(.blue.opacity(0.7))
+                        Text(t(.modelLoading).uppercased())
+                            .font(.amber(9))
+                            .foregroundColor(Amber.warn)
                     }
                 }
                 Text(model.description)
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.white.opacity(0.25))
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
             Spacer()
             if isDownloading {
-                ProgressView().scaleEffect(0.6).frame(width: 60)
+                Text("......")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.hot)
             } else if isDownloaded {
                 if isSelected {
-                    Text(t(.modelActive))
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundColor(.green.opacity(0.7))
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Color.green.opacity(0.1)).cornerRadius(6)
+                    Text("[ACTIVE]")
+                        .font(.amber(9, weight: .bold))
+                        .foregroundColor(Amber.ok)
                 } else {
-                    Button(t(.modelSelect)) { appState.switchLocalModel(to: model) }
-                        .font(.system(size: 11, design: .rounded))
-                        .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
+                    Button(t(.modelSelect).uppercased()) { appState.switchLocalModel(to: model) }
+                        .font(.amber(9))
+                        .foregroundColor(Amber.dim)
+                        .buttonStyle(.plain)
                 }
             } else {
-                Button(t(.modelDownload)) { startDownload(model) }
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Color.white.opacity(0.07)).cornerRadius(6).buttonStyle(.plain)
+                Button("[DOWNLOAD]") { startDownload(model) }
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
+                    .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isSelected ? Color.blue.opacity(0.08) : Color.white.opacity(0.03))
-                .overlay(RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? Color.blue.opacity(0.2) : Color.white.opacity(0.05), lineWidth: 1))
-        )
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(isSelected ? Amber.faint : Color.clear)
+    }
+
+    private func asciiProgressBar(progress: Double) -> some View {
+        GeometryReader { geo in
+            let total = Int((geo.size.width - 20) / 7)
+            let filled = Int(Double(total) * progress)
+            let empty = max(0, total - filled)
+            HStack(spacing: 0) {
+                Text("[")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                Text(String(repeating: "█", count: filled))
+                    .font(.amber(10))
+                    .foregroundColor(Amber.hot)
+                    .amberGlow(2)
+                Text(String(repeating: "─", count: empty))
+                    .font(.amber(10))
+                    .foregroundColor(Amber.faint)
+                Text("]")
+                    .font(.amber(10))
+                    .foregroundColor(Amber.dim)
+                Text(" \(Int(progress * 100))%")
+                    .font(.amber(10, weight: .bold))
+                    .foregroundColor(Amber.hot)
+            }
+            .animation(.easeInOut(duration: 0.3), value: progress)
+        }
+        .frame(height: 14)
     }
 
     private func startDownload(_ model: LocalWhisperModel) {
@@ -417,33 +485,43 @@ struct SettingsView: View {
 
     private var cloudModelSection: some View {
         VStack(spacing: 10) {
-            VStack(spacing: 6) {
-                ForEach(CloudProvider.allCases) { provider in cloudProviderRow(provider) }
+            VStack(spacing: 1) {
+                ForEach(CloudProvider.allCases) { provider in
+                    cloudProviderRow(provider)
+                    Rectangle().fill(Amber.borderFaint).frame(height: 1)
+                }
             }
-            Divider().background(Color.white.opacity(0.06))
+            AmberDivider()
             VStack(alignment: .leading, spacing: 6) {
-                Text("\(t(.modelApiKeyFor)) \(appState.selectedCloudProvider.displayName)")
-                    .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.4))
+                Text("\(t(.modelApiKeyFor)) \(appState.selectedCloudProvider.displayName)".uppercased())
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 HStack(spacing: 8) {
                     Group {
                         if showApiKey { TextField("sk-...", text: $apiKeyInput) }
                         else { SecureField("sk-...", text: $apiKeyInput) }
                     }
-                    .font(.system(size: 12, design: .monospaced)).foregroundColor(.white.opacity(0.8))
-                    .textFieldStyle(.plain).padding(.horizontal, 10).padding(.vertical, 7)
-                    .background(Color.white.opacity(0.05)).cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Amber.faint)
+                    .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                     .colorScheme(.dark)
                     Button(action: { showApiKey.toggle() }) {
-                        Image(systemName: showApiKey ? "eye.slash" : "eye")
-                            .font(.system(size: 12)).foregroundColor(.white.opacity(0.35))
+                        Text(showApiKey ? "[HIDE]" : "[SHOW]")
+                            .font(.amber(9))
+                            .foregroundColor(Amber.dim)
                     }.buttonStyle(.plain)
-                    Button(t(.modelSave)) { saveApiKey() }
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
+                    Button(t(.modelSave).uppercased()) { saveApiKey() }
+                        .font(.amber(9, weight: .bold))
+                        .foregroundColor(Amber.primary)
+                        .buttonStyle(.plain)
                 }
                 Text(t(.modelKeychainNote))
-                    .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
         }
     }
@@ -451,24 +529,27 @@ struct SettingsView: View {
     private func cloudProviderRow(_ provider: CloudProvider) -> some View {
         let isSelected = appState.selectedCloudProvider == provider
         return HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(isSelected ? Color.blue : Color.white.opacity(0.06)).frame(width: 18, height: 18)
-                if isSelected { Circle().fill(.white).frame(width: 7, height: 7) }
-            }
+            Text(isSelected ? "[*]" : "[ ]")
+                .font(.amber(10))
+                .foregroundColor(isSelected ? Amber.hot : Amber.faint)
             VStack(alignment: .leading, spacing: 2) {
-                Text(provider.displayName).font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.85))
-                Text(provider.description).font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.3))
+                Text(provider.displayName.uppercased())
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                Text(provider.description)
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
             Spacer()
             if KeychainHelper.load(key: provider.keychainKey) != nil {
-                Text(t(.modelKeySet)).font(.system(size: 10, design: .rounded)).foregroundColor(.green.opacity(0.6))
+                Text("[KEY·SET]")
+                    .font(.amber(9))
+                    .foregroundColor(Amber.ok)
             }
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 10)
-            .fill(isSelected ? Color.blue.opacity(0.08) : Color.white.opacity(0.03))
-            .overlay(RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.blue.opacity(0.2) : Color.white.opacity(0.05), lineWidth: 1)))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(isSelected ? Amber.faint : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture { appState.selectedCloudProvider = provider; loadApiKeyInput() }
     }
@@ -481,26 +562,30 @@ struct SettingsView: View {
         else { KeychainHelper.save(key: appState.selectedCloudProvider.keychainKey, value: apiKeyInput) }
     }
 
-    // MARK: Язык
+    // MARK: Language
 
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle(t(.langTitle), info: SettingsSection.language.info)
             HStack {
-                Text(t(.interfaceLanguageLabel))
-                    .font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.7))
+                Text(t(.interfaceLanguageLabel).uppercased())
+                    .font(.amber(11))
+                    .foregroundColor(Amber.dim)
                 Spacer()
                 Picker("", selection: $appState.transcriptionLanguage) {
                     ForEach(WhisperLanguage.all) { lang in Text(lang.name).tag(lang.id) }
                 }
-                .pickerStyle(.menu).frame(maxWidth: 220).colorScheme(.dark)
+                .pickerStyle(.menu)
+                .frame(maxWidth: 220)
+                .colorScheme(.dark)
             }
             Text(t(.langHint))
-                .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.25))
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
         }
     }
 
-    // MARK: Промт Whisper
+    // MARK: Prompt
 
     private var promptSection: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -508,29 +593,36 @@ struct SettingsView: View {
                 sectionTitle(t(.promptTitle), info: SettingsSection.prompt.info)
                 Spacer()
                 Toggle("", isOn: $appState.promptEnabled)
-                    .toggleStyle(.switch).scaleEffect(0.8).tint(.blue)
+                    .toggleStyle(.switch)
+                    .scaleEffect(0.8)
+                    .tint(Amber.hot)
             }
             if appState.promptEnabled {
                 TextEditor(text: $appState.transcriptionPrompt)
-                    .font(.system(size: 12, design: .monospaced)).foregroundColor(.white.opacity(0.8))
-                    .scrollContentBackground(.hidden).background(Color.white.opacity(0.05))
-                    .cornerRadius(8).frame(minHeight: 100)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                    .scrollContentBackground(.hidden)
+                    .background(Amber.faint)
+                    .frame(minHeight: 100)
+                    .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                 HStack {
                     Spacer()
-                    Button(t(.promptReset)) {
+                    Button(t(.promptReset).uppercased()) {
                         appState.transcriptionPrompt = t(.promptDefaultText)
                     }
-                    .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.35)).buttonStyle(.plain)
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
+                    .buttonStyle(.plain)
                 }
             } else {
                 Text(t(.promptDisabledHint))
-                    .font(.system(size: 12, design: .rounded)).foregroundColor(.white.opacity(0.25))
+                    .font(.amber(10))
+                    .foregroundColor(Amber.faint)
             }
         }
     }
 
-    // MARK: Коррекция
+    // MARK: Correction
 
     @ObservedObject private var ollamaManager = OllamaManager.shared
     @State private var correctionApiKeyInput: String = ""
@@ -540,30 +632,33 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             sectionTitle(t(.correctionTitle), info: SettingsSection.correction.info)
 
-            // Выбор режима
-            VStack(spacing: 6) {
+            // Mode selection
+            VStack(spacing: 1) {
                 correctionModeRow(.off)
+                Rectangle().fill(Amber.borderFaint).frame(height: 1)
                 correctionModeRow(.ollama)
+                Rectangle().fill(Amber.borderFaint).frame(height: 1)
                 correctionModeRow(.api)
             }
+            .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
 
             if appState.correctionMode != .off {
-                Divider().background(Color.white.opacity(0.08))
+                AmberDivider()
             }
 
-            // Ollama настройки
+            // Ollama settings
             if appState.correctionMode == .ollama {
                 ollamaCorrectionSection
             }
 
-            // API настройки
+            // API settings
             if appState.correctionMode == .api {
                 apiCorrectionSection
             }
 
-            // Поле промта
+            // Prompt field
             if appState.correctionMode != .off {
-                Divider().background(Color.white.opacity(0.08))
+                AmberDivider()
                 correctionPromptSection
             }
         }
@@ -574,23 +669,22 @@ struct SettingsView: View {
     private func correctionModeRow(_ mode: CorrectionMode) -> some View {
         let isSelected = appState.correctionMode == mode
         return HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(isSelected ? Color.blue : Color.white.opacity(0.06)).frame(width: 18, height: 18)
-                if isSelected { Circle().fill(.white).frame(width: 7, height: 7) }
-            }
+            Text(isSelected ? "[*]" : "[ ]")
+                .font(.amber(10))
+                .foregroundColor(isSelected ? Amber.hot : Amber.faint)
             VStack(alignment: .leading, spacing: 2) {
-                Text(mode.displayName)
-                    .font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.85))
+                Text(mode.displayName.uppercased())
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
                 Text(correctionModeDescription(mode))
-                    .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.3))
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
             Spacer()
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 10)
-            .fill(isSelected ? Color.blue.opacity(0.08) : Color.white.opacity(0.03))
-            .overlay(RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.blue.opacity(0.2) : Color.white.opacity(0.05), lineWidth: 1)))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(isSelected ? Amber.faint : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture { appState.correctionMode = mode }
     }
@@ -605,111 +699,96 @@ struct SettingsView: View {
 
     private var ollamaCorrectionSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-
-            // Статус установки + ползунок
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
-                        Text("Ollama")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.85))
-                        Text("• \(ollamaStatusLabel)")
-                            .font(.system(size: 11, design: .rounded))
-                            .foregroundColor(ollamaStatusColor)
+                        Text("OLLAMA")
+                            .font(.amber(11, weight: .bold))
+                            .foregroundColor(Amber.primary)
+                        Text("· \(ollamaStatusLabel.uppercased())")
+                            .font(.amber(9))
+                            .foregroundColor(ollamaStatusAmberColor)
                     }
-                    Text("\(t(.correctionOllamaModelLabel)) \(OllamaManager.defaultModel) (~1.3 ГБ)")
-                        .font(.system(size: 11, design: .rounded))
-                        .foregroundColor(.white.opacity(0.3))
+                    Text("\(t(.correctionOllamaModelLabel)) \(OllamaManager.defaultModel) (~1.3 GB)".uppercased())
+                        .font(.amber(9))
+                        .foregroundColor(Amber.faint)
                 }
                 Spacer()
 
-                // Ползунок включения (только если установлена)
                 if ollamaManager.isInstalled {
                     Toggle("", isOn: $ollamaManager.enabled)
                         .toggleStyle(.switch)
                         .scaleEffect(0.85)
-                        .tint(.blue)
+                        .tint(Amber.hot)
                         .disabled(isOllamaToggleDisabled)
                 }
             }
 
-            // Кнопка установки / прогресс
             switch ollamaManager.installStatus {
             case .notInstalled:
                 Button(action: { Task { await ollamaManager.install() } }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.down.circle")
-                            .font(.system(size: 13))
-                        Text(t(.correctionInstallOllama))
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Color.blue.opacity(0.3))
-                    .cornerRadius(9)
-                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.blue.opacity(0.5), lineWidth: 1))
+                    Text("[INSTALL OLLAMA]")
+                        .font(.amber(10))
+                        .foregroundColor(Amber.bright)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
 
             case .installing(let progress, let label):
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text(label)
-                            .font(.system(size: 11, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
+                        Text(label.uppercased())
+                            .font(.amber(9))
+                            .foregroundColor(Amber.dim)
                         Spacer()
                         Text("\(Int(progress * 100))%")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.4))
+                            .font(.amber(9, weight: .bold))
+                            .foregroundColor(Amber.hot)
                     }
-                    ProgressView(value: progress).tint(.blue)
+                    asciiProgressBar(progress: progress)
                 }
 
             case .installed:
-                // Прогресс скачивания модели
                 switch ollamaManager.modelStatus {
                 case .notPulled:
                     if case .running = ollamaManager.serverStatus {
                         Button(action: { Task { await ollamaManager.pullModel() } }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.down.circle")
-                                    .font(.system(size: 13))
-                                Text("\(t(.correctionDownloadModel)) (\(OllamaManager.defaultModel))")
-                                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(Color.blue.opacity(0.3))
-                            .cornerRadius(9)
-                            .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.blue.opacity(0.5), lineWidth: 1))
+                            Text("[DOWNLOAD \(OllamaManager.defaultModel.uppercased())]")
+                                .font(.amber(10))
+                                .foregroundColor(Amber.bright)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                     }
                 case .pulling(let progress):
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text(t(.correctionLoadingModel))
-                                .font(.system(size: 11, design: .rounded))
-                                .foregroundColor(.white.opacity(0.5))
+                            Text(t(.correctionLoadingModel).uppercased())
+                                .font(.amber(9))
+                                .foregroundColor(Amber.dim)
                             Spacer()
                             Text("\(Int(progress * 100))%")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.4))
+                                .font(.amber(9, weight: .bold))
+                                .foregroundColor(Amber.hot)
                         }
-                        ProgressView(value: progress).tint(.blue)
+                        asciiProgressBar(progress: progress)
                     }
                 case .ready:
                     EmptyView()
                 case .error(let msg):
-                    Text(t(.correctionModelError) + msg)
-                        .font(.system(size: 11, design: .rounded))
-                        .foregroundColor(.red.opacity(0.7))
+                    Text((t(.correctionModelError) + msg).uppercased())
+                        .font(.amber(9))
+                        .foregroundColor(Amber.rec)
                 }
 
             case .error(let msg):
-                Text(t(.correctionInstallError) + msg)
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundColor(.red.opacity(0.7))
+                Text((t(.correctionInstallError) + msg).uppercased())
+                    .font(.amber(9))
+                    .foregroundColor(Amber.rec)
             }
         }
     }
@@ -736,19 +815,21 @@ struct SettingsView: View {
         }
     }
 
-    private var ollamaStatusColor: Color {
+    private var ollamaStatusAmberColor: Color {
         switch ollamaManager.installStatus {
-        case .notInstalled: return .white.opacity(0.3)
-        case .installing:   return .orange.opacity(0.7)
-        case .error:        return .red.opacity(0.7)
+        case .notInstalled: return Amber.faint
+        case .installing:   return Amber.warn
+        case .error:        return Amber.rec
         case .installed:
             if case .running = ollamaManager.serverStatus,
-               case .ready = ollamaManager.modelStatus { return .green.opacity(0.7) }
-            if case .stopped = ollamaManager.serverStatus { return .white.opacity(0.3) }
-            if case .error = ollamaManager.serverStatus { return .red.opacity(0.7) }
-            return .orange.opacity(0.7)
+               case .ready = ollamaManager.modelStatus { return Amber.ok }
+            if case .stopped = ollamaManager.serverStatus { return Amber.faint }
+            if case .error = ollamaManager.serverStatus { return Amber.rec }
+            return Amber.warn
         }
     }
+
+    private var ollamaStatusColor: Color { ollamaStatusAmberColor }
 
     private var isOllamaToggleDisabled: Bool {
         switch ollamaManager.serverStatus {
@@ -759,60 +840,74 @@ struct SettingsView: View {
 
     private var apiCorrectionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Выбор провайдера
-            HStack(spacing: 8) {
+            // Provider selection
+            HStack(spacing: 0) {
                 ForEach(CorrectionApiProvider.allCases) { provider in
                     Button(action: { appState.correctionApiProvider = provider }) {
-                        Text(provider.displayName)
-                            .font(.system(size: 11, weight: appState.correctionApiProvider == provider ? .semibold : .regular, design: .rounded))
-                            .foregroundColor(appState.correctionApiProvider == provider ? .white : .white.opacity(0.4))
-                            .padding(.horizontal, 10).padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 7)
-                                .fill(appState.correctionApiProvider == provider ? Color.blue.opacity(0.25) : Color.white.opacity(0.04))
-                                .overlay(RoundedRectangle(cornerRadius: 7)
-                                    .stroke(appState.correctionApiProvider == provider ? Color.blue.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)))
-                    }.buttonStyle(.plain)
+                        Text(provider.displayName.uppercased())
+                            .font(.amber(10, weight: appState.correctionApiProvider == provider ? .bold : .regular))
+                            .foregroundColor(appState.correctionApiProvider == provider ? Amber.bright : Amber.dim)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(appState.correctionApiProvider == provider ? Amber.faint : Color.clear)
+                    }
+                    .buttonStyle(.plain)
+                    if provider != CorrectionApiProvider.allCases.last {
+                        Rectangle().fill(Amber.border).frame(width: 1, height: 26)
+                    }
                 }
             }
+            .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
 
-            // Эндпоинт для кастомного провайдера
+            // Custom endpoint
             if appState.correctionApiProvider == .custom {
                 TextField("https://...", text: $appState.correctionCustomEndpoint)
-                    .font(.system(size: 12, design: .monospaced)).foregroundColor(.white.opacity(0.8))
-                    .textFieldStyle(.plain).padding(.horizontal, 10).padding(.vertical, 7)
-                    .background(Color.white.opacity(0.05)).cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Amber.faint)
+                    .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                     .colorScheme(.dark)
             }
 
-            // API-ключ
+            // API key
             VStack(alignment: .leading, spacing: 6) {
-                Text("\(t(.correctionApiKeyLabel)) (\(appState.correctionApiProvider.displayName))")
-                    .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.4))
+                Text("\(t(.correctionApiKeyLabel)) (\(appState.correctionApiProvider.displayName))".uppercased())
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
                 HStack(spacing: 8) {
                     Group {
                         if showCorrectionApiKey { TextField("sk-...", text: $correctionApiKeyInput) }
                         else { SecureField("sk-...", text: $correctionApiKeyInput) }
                     }
-                    .font(.system(size: 12, design: .monospaced)).foregroundColor(.white.opacity(0.8))
-                    .textFieldStyle(.plain).padding(.horizontal, 10).padding(.vertical, 7)
-                    .background(Color.white.opacity(0.05)).cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Amber.faint)
+                    .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
                     .colorScheme(.dark)
                     Button(action: { showCorrectionApiKey.toggle() }) {
-                        Image(systemName: showCorrectionApiKey ? "eye.slash" : "eye")
-                            .font(.system(size: 12)).foregroundColor(.white.opacity(0.35))
+                        Text(showCorrectionApiKey ? "[HIDE]" : "[SHOW]")
+                            .font(.amber(9))
+                            .foregroundColor(Amber.dim)
                     }.buttonStyle(.plain)
-                    Button(t(.correctionSave)) { saveCorrectionApiKey() }
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(.blue.opacity(0.8)).buttonStyle(.plain)
+                    Button(t(.correctionSave).uppercased()) { saveCorrectionApiKey() }
+                        .font(.amber(9, weight: .bold))
+                        .foregroundColor(Amber.primary)
+                        .buttonStyle(.plain)
                 }
                 if appState.correctionApiProvider == .groq {
                     Text(t(.correctionGroqHint))
-                        .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
+                        .font(.amber(9))
+                        .foregroundColor(Amber.faint)
                 }
                 Text(t(.correctionKeychainNote))
-                    .font(.system(size: 10, design: .rounded)).foregroundColor(.white.opacity(0.2))
+                    .font(.amber(9))
+                    .foregroundColor(Amber.faint)
             }
         }
     }
@@ -820,18 +915,23 @@ struct SettingsView: View {
     private var correctionPromptSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(t(.correctionPromptLabel))
-                    .font(.system(size: 10, weight: .semibold, design: .rounded)).foregroundColor(.white.opacity(0.3))
-                InfoButton(text: t(.correctionPromptInfoHint))
+                Text("// \(t(.correctionPromptLabel).uppercased())")
+                    .font(.amber(9, weight: .bold))
+                    .foregroundColor(Amber.dim)
+                AmberInfoButton(text: t(.correctionPromptInfoHint))
                 Spacer()
-                Button(t(.correctionPromptReset)) { appState.correctionPrompt = defaultCorrectionPrompt }
-                    .font(.system(size: 11, design: .rounded)).foregroundColor(.white.opacity(0.35)).buttonStyle(.plain)
+                Button(t(.correctionPromptReset).uppercased()) { appState.correctionPrompt = defaultCorrectionPrompt }
+                    .font(.amber(9))
+                    .foregroundColor(Amber.dim)
+                    .buttonStyle(.plain)
             }
             TextEditor(text: $appState.correctionPrompt)
-                .font(.system(size: 11, design: .monospaced)).foregroundColor(.white.opacity(0.75))
-                .scrollContentBackground(.hidden).background(Color.white.opacity(0.04))
-                .cornerRadius(8).frame(minHeight: 90)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .font(.amber(11))
+                .foregroundColor(Amber.primary)
+                .scrollContentBackground(.hidden)
+                .background(Amber.faint)
+                .frame(minHeight: 90)
+                .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
         }
     }
 
@@ -843,7 +943,7 @@ struct SettingsView: View {
         else { KeychainHelper.save(key: appState.correctionApiProvider.keychainKey, value: correctionApiKeyInput) }
     }
 
-    // MARK: Интерфейс
+    // MARK: Interface
 
     @ObservedObject private var updater = UpdateChecker.shared
 
@@ -851,10 +951,11 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle(t(.interfaceTitle), info: SettingsSection.interface_.info)
 
-            // Язык интерфейса
+            // Interface language
             HStack {
-                Text(t(.interfaceLanguageLabel))
-                    .font(.system(size: 13, design: .rounded)).foregroundColor(.white.opacity(0.7))
+                Text(t(.interfaceLanguageLabel).uppercased())
+                    .font(.amber(11))
+                    .foregroundColor(Amber.dim)
                 Spacer()
                 Picker("", selection: Binding(
                     get: { L10nState.shared.language },
@@ -864,17 +965,19 @@ struct SettingsView: View {
                         Text(lang.displayName).tag(lang)
                     }
                 }
-                .pickerStyle(.menu).frame(maxWidth: 160).colorScheme(.dark)
+                .pickerStyle(.menu)
+                .frame(maxWidth: 160)
+                .colorScheme(.dark)
             }
 
-            Divider().background(Color.white.opacity(0.06))
+            AmberDivider()
 
-            // Версия + проверка обновлений
+            // Version + update check
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("\(t(.updateCurrentVersion)) \(appVersion)")
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundColor(.white.opacity(0.7))
+                    Text("\(t(.updateCurrentVersion).uppercased()) \(appVersion)")
+                        .font(.amber(11))
+                        .foregroundColor(Amber.primary)
                     updateStatusLabel
                 }
                 Spacer()
@@ -889,21 +992,21 @@ struct SettingsView: View {
         case .idle:
             EmptyView()
         case .checking:
-            Text(t(.updateChecking))
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.white.opacity(0.35))
+            Text(t(.updateChecking).uppercased())
+                .font(.amber(9))
+                .foregroundColor(Amber.dim)
         case .upToDate:
-            Text(t(.updateUpToDate))
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.green.opacity(0.7))
+            Text(t(.updateUpToDate).uppercased())
+                .font(.amber(9))
+                .foregroundColor(Amber.ok)
         case .available(let version, _):
-            Text("\(t(.updateAvailable)): v\(version)")
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.orange.opacity(0.9))
+            Text("\(t(.updateAvailable).uppercased()): V\(version)")
+                .font(.amber(9))
+                .foregroundColor(Amber.warn)
         case .error(let msg):
-            Text("\(t(.updateError)): \(msg)")
-                .font(.system(size: 11, design: .rounded))
-                .foregroundColor(.red.opacity(0.7))
+            Text("\(t(.updateError).uppercased()): \(msg)")
+                .font(.amber(9))
+                .foregroundColor(Amber.rec)
                 .lineLimit(1)
         }
     }
@@ -912,30 +1015,29 @@ struct SettingsView: View {
     private var updateActionButton: some View {
         switch updater.state {
         case .checking:
-            ProgressView()
-                .scaleEffect(0.6)
-                .frame(width: 60)
+            Text("......")
+                .font(.amber(10))
+                .foregroundColor(Amber.hot)
+                .frame(width: 80)
         case .available(_, let url):
-            Button(t(.updateDownload)) {
+            Button(t(.updateDownload).uppercased()) {
                 updater.openReleasePage(url: url)
             }
-            .font(.system(size: 11, weight: .medium, design: .rounded))
-            .foregroundColor(.white)
-            .padding(.horizontal, 12).padding(.vertical, 6)
-            .background(Color.orange.opacity(0.3))
-            .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.orange.opacity(0.5), lineWidth: 1))
+            .font(.amber(10))
+            .foregroundColor(Amber.bright)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .overlay(Rectangle().stroke(Amber.hot, lineWidth: 1))
             .buttonStyle(.plain)
         default:
-            Button(t(.updateCheck)) {
+            Button(t(.updateCheck).uppercased()) {
                 updater.check()
             }
-            .font(.system(size: 11, weight: .medium, design: .rounded))
-            .foregroundColor(.white.opacity(0.6))
-            .padding(.horizontal, 12).padding(.vertical, 6)
-            .background(Color.white.opacity(0.07))
-            .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .font(.amber(10))
+            .foregroundColor(Amber.dim)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .overlay(Rectangle().stroke(Amber.border, lineWidth: 1))
             .buttonStyle(.plain)
         }
     }
@@ -944,40 +1046,52 @@ struct SettingsView: View {
 
     private func providerTab(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(label)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .regular, design: .rounded))
-                .foregroundColor(isSelected ? .white : .white.opacity(0.4))
-                .frame(maxWidth: .infinity).padding(.vertical, 7)
-                .background(RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue.opacity(0.25) : Color.white.opacity(0.04))
-                    .overlay(RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.blue.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)))
-        }.buttonStyle(.plain)
+            Text(label.uppercased())
+                .font(.amber(10, weight: isSelected ? .bold : .regular))
+                .foregroundColor(isSelected ? Amber.bright : Amber.dim)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(isSelected ? Amber.faint : Color.clear)
+        }
+        .buttonStyle(.plain)
     }
 }
 
-// MARK: - InfoButton
+// MARK: - AmberInfoButton
+
+struct AmberInfoButton: View {
+    let text: String
+    @State private var showPopover = false
+
+    var body: some View {
+        Button(action: { showPopover.toggle() }) {
+            Text("[?]")
+                .font(.amber(9))
+                .foregroundColor(Amber.faint)
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showPopover, arrowEdge: .top) {
+            ZStack {
+                Amber.bg
+                Text(text)
+                    .font(.amber(11))
+                    .foregroundColor(Amber.primary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(14)
+                    .frame(maxWidth: 260)
+            }
+        }
+    }
+}
+
+// MARK: - InfoButton (legacy alias)
 
 struct InfoButton: View {
     let text: String
     @State private var showPopover = false
 
     var body: some View {
-        Button(action: { showPopover.toggle() }) {
-            Image(systemName: "info.circle")
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.25))
-        }
-        .buttonStyle(.plain)
-        .popover(isPresented: $showPopover, arrowEdge: .top) {
-            Text(text)
-                .font(.system(size: 12, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(14)
-                .frame(maxWidth: 260)
-                .background(Color.black.opacity(0.9))
-        }
+        AmberInfoButton(text: text)
     }
 }
